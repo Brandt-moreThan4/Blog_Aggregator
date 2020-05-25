@@ -1,51 +1,34 @@
 from bs4 import BeautifulSoup
 import scrapfunctions as sp
-import csv
-import os
+import datetime as dt
 import matplotlib.pyplot as plt
 import numpy as np
 
 debt_url = 'https://treasurydirect.gov/govt/reports/pd/histdebt/histdebt_histo5.htm'
-
 debt_soup = sp.get_soup(debt_url)
-debt_table = debt_soup.table
-debt_rows = debt_table.find_all('tr')
+debt_tbl = debt_soup.table # Debt table is only table on page
+debt_tbl_rows = debt_tbl.find_all('tr')
 
-file_name = 'debt.csv'
-i = 0
-if os.path.exists(file_name):
-    while os.path.exists(file_name):
-        i += 1
-        file_name = 'debt' + str(i) + '.csv'
+dates, debt = [], []
 
-# Newline parameter set so that csv writer doesn't insert blank lines in between each row
-with open(file_name, 'w+', newline='') as f:
-    writer = csv.writer(f)
-    csv_rows = []
-    for row in debt_rows:
-        csv_row = []
-        c_row = row.find_all(['td', 'th'])
-        for cell in c_row:
-            csv_row.append(cell.get_text())
+for tbl_row in debt_tbl_rows:
+    cells = tbl_row.find_all(['td', 'th'])
+    if len(cells) > 0:
+        if len(cells[0].get_text()) > 0:
+            dates.append(cells[0].get_text())
+            debt.append(cells[1].get_text())
 
-        # Just a check to make sure there is a date there. Since some were blank.
-        if csv_row:
-            if csv_row[0] != "":
-                writer.writerow(csv_row)
-                csv_rows.append(csv_row)
+# Delete headers and sort from oldest to newest and convert to date and float types
+del dates[0]
+del debt[0]
+dates.reverse()
+debt.reverse()
+dates = [dt.datetime.strptime(date.replace(' ', ''),'%m/%d/%Y') for date in dates]
+debt = [float(i.replace(',', '')) for i in debt]
 
-
-x_vals = []
-y_vals = []
-
-for i in range(1, len(csv_rows)-1):
-    x_vals.append(csv_rows[i][0])
-    y_vals.append(float(csv_rows[i][1].replace(',', '')))
-
-x_vals.reverse()
-y_vals.reverse()
+numpy_ray = np.asarray([dates, debt])
 
 fig, ax = plt.subplots()  # Create a figure containing a single axes.
 plt.style.use('seaborn')
-ax.plot(x_vals, y_vals, c='b')
+ax.plot(numpy_ray[0, :], numpy_ray[1, :], c='b')
 plt.show()
