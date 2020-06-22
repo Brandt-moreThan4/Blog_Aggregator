@@ -1,9 +1,17 @@
-from urllib.request import urlopen
-from urllib.error import HTTPError
-from urllib.error import URLError
 from bs4 import BeautifulSoup
 import scrapfunctions as sp
+import requests
+import time
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+import time
 
-title = sp.get_h1('https://www.programiz.com/python-programming/exception-handling')
+# os.startfile(r'C:\Users\bgreen3\Desktop\temp.txt')
+if __name__ == '__main__':
 
-print(title)
+    website_path = "https://www.oaktreecapital.com/insights/howard-marks-memos"
+    response = requests.get('https://www.oaktreecapital.com/docs/default-source/memos/uncertainty-ii.pdf')
+    soup = sp.get_soup(url=website_path)
+    all_tables = soup.find_all('table')
+    memo = soup.find(id='tvMemoArchivet7')
