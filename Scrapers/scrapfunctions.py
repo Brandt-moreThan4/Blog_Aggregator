@@ -4,20 +4,31 @@ from selenium import webdriver
 
 
 def get_soup(url):
-    """Returns beautiful Soup object of the requested page"""
+    """Returns beautiful Soup object of the requested page or None if there was trouble somehwere along the way."""
+
+    page_response = get_page_response(url)
+    if page_response is not None:
+        try:
+            soup = BeautifulSoup(page_response.text)
+        except:
+            print('Trouble parsing the soup for: {}'.format(url))
+            return None
+        else:
+            return soup
+    else:
+        print('The response object was "None" so there is no point in trying to parse')
+        return None
+
+
+def get_page_response(url):
+    """Get a page response using the given url"""
     try:
         page_response = requests.get(url)
     except:
         print('Error loading url')
         return None
-
-    try:
-        soup = BeautifulSoup(page_response.text)
-    except:
-        print('Trouble parsing the soup for: {}'.format(url))
-        return None
     else:
-        return soup
+        return page_response
 
 
 def get_chrome_driver():

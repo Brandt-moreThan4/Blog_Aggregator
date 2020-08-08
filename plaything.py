@@ -7,7 +7,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 import time
 
-# os.startfile(r'C:\Users\bgreen3\Desktop\temp.txt')
 if __name__ == '__main__':
 
     website_path = "https://www.oaktreecapital.com/insights/howard-marks-memos"
