@@ -12,7 +12,7 @@ def get_soup(url):
         return None
 
     try:
-        soup = BeautifulSoup(page_response.text, 'html5lib')
+        soup = BeautifulSoup(page_response.text)
     except:
         print('Trouble parsing the soup for: {}'.format(url))
         return None
@@ -31,3 +31,13 @@ def get_chrome_driver():
         return None
     else:
         return driver
+
+
+def time_usage(func):
+    def wrapper(*args, **kwargs):
+        begin_time = time.time()
+        retval = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"elapsed time: {(end_time - begin_time)}")
+        return retval
+    return wrapper

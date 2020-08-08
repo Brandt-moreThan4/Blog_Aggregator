@@ -1,11 +1,28 @@
 from bs4 import BeautifulSoup
-import scrapfunctions as sp
 import datetime as dt
 import matplotlib.pyplot as plt
 import numpy as np
+import requests
 
+
+def get_soup(url):
+    """Returns beautiful Soup object of the requested page"""
+    try:
+        page_response = requests.get(url)
+    except:
+        print('Error loading url')
+        return None
+
+    try:
+        soup = BeautifulSoup(page_response.text)
+    except:
+        print('Trouble parsing the soup for: {}'.format(url))
+        return None
+    else:
+        return soup
+    
 debt_url = 'https://treasurydirect.gov/govt/reports/pd/histdebt/histdebt_histo5.htm'
-debt_soup = sp.get_soup(debt_url)
+debt_soup = get_soup(debt_url)
 debt_tbl = debt_soup.table # Debt table is only table on page
 debt_tbl_rows = debt_tbl.find_all('tr')
 
