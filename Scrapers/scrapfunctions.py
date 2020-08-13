@@ -52,3 +52,10 @@ def time_usage(func):
         print(f"elapsed time: {(end_time - begin_time)}")
         return retval
     return wrapper
+
+
+def convert_txt_to_word(text, destination_path='Federalist Papers.docx'):
+    """Takes text string and saves it as a word document"""
+    doc = Document()
+    doc.add_paragraph(text)
+    doc.save(destination_path)
