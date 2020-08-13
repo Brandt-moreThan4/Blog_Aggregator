@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
-from selenium import webdriver
-
+# from selenium import webdriver
+# from docx import Document
+import time
 
 def get_soup(url):
     """Returns beautiful Soup object of the requested page or None if there was trouble somehwere along the way."""
