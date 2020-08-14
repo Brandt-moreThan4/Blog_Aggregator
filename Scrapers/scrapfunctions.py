@@ -3,6 +3,7 @@ import requests
 # from selenium import webdriver
 # from docx import Document
 import time
+import string
 
 def get_soup(url):
     """Returns beautiful Soup object of the requested page or None if there was trouble somehwere along the way."""
@@ -19,6 +20,16 @@ def get_soup(url):
     else:
         print('The response object was "None" so there is no point in trying to parse')
         return None
+
+def format_filename(s):
+    """Take a string and return a valid filename constructed from the string.
+Uses a whitelist approach: any characters not present in valid_chars are
+removed. Also spaces are replaced with underscores.
+"""
+    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+    filename = ''.join(c for c in s if c in valid_chars)
+    filename = filename.replace(' ','_') # I don't like spaces in filenames.
+    return filename
 
 
 def get_page_response(url):

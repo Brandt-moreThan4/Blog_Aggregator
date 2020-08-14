@@ -1,19 +1,15 @@
-import os
 import re
 import sys
 import datetime
 sys.path.append('C:/Users/15314/source/repos/WebScraping/Scrapers')
 import scrapfunctions as scrappy
-import urllib
 import bs4
-import string
-# from docx import Document
-# from docx.shared import Inches
+from pathlib import Path
+from post_classes import Post, Image
 
 # YEARS = [str(2008 + i) for i in range(12)]
 # MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
 
-IMAGE_FOLDER_PATH = r'C:\Users\15314\source\repos\WebScraping\blog_aggregator\images'
 
 YEARS = ['2015']
 MONTHS = ['12']
@@ -78,115 +74,40 @@ def get_post_body(post, new_post):
 
     for child in all_body_children:
         if isinstance(child, bs4.element.NavigableString):
-            # child.strip())
-            all_content.append(('NavigableString', child))
+            all_content.append(child)
         elif isinstance(child, bs4.element.Tag):
             if child.name == 'img':
-                if child['src'] is not None:
-                    source_img_url = get_img_url(child)
-                    destination_path = IMAGE_FOLDER_PATH + '\\' + format_filename(new_post.title.strip())  
-                    destination_path += '--' + source_img_url.split('/')[-1]
-                    save_image(source_img_url, destination_path)
-                    all_content.append(('image',destination_path))
+                if 'src' in child.attrs:
+                    image = Image(child, new_post)
+                    all_content.append(image)
                     
-                
     return all_content
 
 
-def get_img_url(img_tag):
-    """Given an image tag, get the url where that image is stored"""
-
-    # First try to get the big image from the <a> tag, but if that doesn't work then just go for the src image url
-    try:
-        return img_tag.parent['href']
-    except:
-        return img_tag['src']
-
-
-
-def save_image(source_img_url, destination_path):
-    """Save a blog image in the folder"""
-    
-    try:
-        with open(destination_path, 'wb') as imagefile:
-            imagefile.write(urllib.request.urlopen(source_img_url).read())
-    except:
-        pass
-
-
-def make_word_doc():
-    """Make a word doc from the post objects"""
-    
-    doc = Document()
-    for post in all_posts:
-        doc.add_paragraph('\n\n----NEW POSTTTTT---\n\n')
-        doc.add_paragraph(post.title + '\n')
-        doc.add_paragraph(str(post.date) + '\n')
-        chunks  = []
-        for typey, content in post.body:
-            if typey == 'image':
-                doc.add_paragraph(''.join(chunks))
-                chunks = []
-                doc.add_picture(content, width=Inches(6.5))
-            else:
-                chunks.append(content)
-        if chunks:
-            doc.add_paragraph(''.join(chunks))
-        
-        doc.add_paragraph('\n\n-------END POST------\n\n\n\n\n\n')
-    
-    doc.save('aswath.docx')
-
 
 def make_html():
-    with open('test_aswath.html', 'w') as f:
-        # f.write('<style>* {with:<style>')
+
+    with (Path.cwd() / 'test_aswath.html').open('w') as f:
         for post in all_posts:
             f.write('<div>----NEW POSTTTTT---</div>')
             f.write(f'<div>----{post.title}---</div>')
             f.write(f'<div>----{post.date}---</div>')
             
             chunks  = []
-            for typey, content in post.body:
-                if typey == 'image':
-                    f.write(f"<pre>{''.join(chunks)}</pre>")
+            for content in post.body:
+                if isinstance(content, Image):
+                    all_chunk = ''.join(chunks)
+                    all_chunk = all_chunk.replace('\n', '<br/>')
+                    f.write(f"<div>{all_chunk}</div>")
                     chunks = []
-                    f.write(f'<img src="{content}"></img>')
+                    f.write(f'<img src="{content.image_path}"></img>')
                 else:
                     chunks.append(content)
             if chunks:
-                f.write(f"<pre>{''.join(chunks)}</pre>")
+                f.write(f"<div>{''.join(chunks)}</div>")
             f.write(f"<div>-------END POST------</div>")
 
 
-def format_filename(s):
-    """Take a string and return a valid filename constructed from the string.
-Uses a whitelist approach: any characters not present in valid_chars are
-removed. Also spaces are replaced with underscores.
-"""
-    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
-    filename = ''.join(c for c in s if c in valid_chars)
-    filename = filename.replace(' ','_') # I don't like spaces in filenames.
-    return filename
-
-
-class Post():
-    date = ''
-    title = ''
-    # Body is a touple
-    body = []
-
-    def convert_date(self):
-        """Try to convert the text date to datetime, but if it does not work then keep it
-        as a string"""
-        # This is sketch. I should not allow the possibility for self.date to be two different types.
-        try:
-            self.date = datetime.datetime.strptime(self.date, '%A, %B %d, %Y')
-        except:
-            pass
-
-    def __str__(self):
-        return str(f'{self.date}\n{self.title}\n{self.body}')
 
 
 if __name__ == "__main__":    
