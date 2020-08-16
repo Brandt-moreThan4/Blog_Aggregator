@@ -6,7 +6,9 @@
 class Post():
     date = ''
     title = ''
+    author = ''
     body = ''
+    url = ''
 
 
     def convert_date(self):
@@ -20,6 +22,7 @@ class Post():
 
     def __str__(self):
         return str(f'{self.date}\n{self.title}\n{self.body}')
+
 
 
 
