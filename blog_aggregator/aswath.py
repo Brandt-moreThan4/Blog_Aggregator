@@ -1,7 +1,8 @@
 import re
 import sys
 import time
-sys.path.append('C:/Users/15314/source/repos/WebScraping/Scrapers')
+
+sys.path.append(r'C:\Users\15314\PycharmProjects\WebScraping\Scrapers')
 import scrapfunctions as scrappy
 import bs4
 from pathlib import Path
@@ -12,16 +13,15 @@ from django.template.loader import get_template
 # YEARS = [str(2008 + i) for i in range(12)]
 MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
 
-
 YEARS = ['2015']
 # MONTHS = ['12']
 
 invalid_urls = []
 all_posts = []
 
+
 @scrappy.time_usage
 def main():
-    
     # Go year by year and then month by month and extract all blog content on those pages.
     for year in YEARS:
         for month in MONTHS:
@@ -31,19 +31,19 @@ def main():
             if page_is_valid(page_soup):
                 extract_posts(page_soup)
             else:
-                invalid_urls.append(url)    
-    
+                invalid_urls.append(url)
+
             global all_posts
-            make_html({'posts':all_posts}, year, month)
-            
+            make_html({'posts': all_posts}, year, month)
+
             all_posts = []
             time.sleep(1)
 
 
-def page_is_valid(page_soup):    
+def page_is_valid(page_soup):
     """Give the whole soup on the page and returns True if it contains at least one valid post."""
 
-    post = page_soup.find(class_='post-body')   
+    post = page_soup.find(class_='post-body')
     return post is not None
 
 
@@ -66,24 +66,16 @@ def build_post(post_soup):
     return new_post
 
 
-
 def make_html(context, year, month):
-
     posts_as_html = get_template("aswath.html").render(context)
-    
-    
-    year_dir = Path(r'C:\Users\15314\source\repos\WebScraping\blog_aggregator\aswath_posts')  / year
-    if year_dir.exists() == False:
+
+    year_dir = Path(r'C:\Users\15314\source\repos\WebScraping\blog_aggregator\aswath_posts') / year
+    if not year_dir.exists():
         year_dir.mkdir()
 
-    with (year_dir / (month + '.html') ).open('w') as f:
+    with (year_dir / (month + '.html')).open('w') as f:
         f.write(posts_as_html)
 
 
-
-if __name__ == "__main__":    
-
-    
+if __name__ == "__main__":
     main()
-
-                

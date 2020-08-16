@@ -1,9 +1,9 @@
 from bs4 import BeautifulSoup
+from selenium import webdriver
 import requests
-# from selenium import webdriver
-# from docx import Document
 import time
 import string
+
 
 def get_soup(url):
     """Returns beautiful Soup object of the requested page or None if there was trouble somehwere along the way."""
@@ -21,6 +21,7 @@ def get_soup(url):
         print('The response object was "None" so there is no point in trying to parse')
         return None
 
+
 def format_filename(s):
     """Take a string and return a valid filename constructed from the string.
 Uses a whitelist approach: any characters not present in valid_chars are
@@ -28,7 +29,7 @@ removed. Also spaces are replaced with underscores.
 """
     valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
     filename = ''.join(c for c in s if c in valid_chars)
-    filename = filename.replace(' ','_') # I don't like spaces in filenames.
+    filename = filename.replace(' ', '_')  # I don't like spaces in filenames.
     return filename
 
 
@@ -46,9 +47,11 @@ def get_page_response(url):
 def get_chrome_driver():
     """Returns a selenium driver object to manipulate chrome"""
 
-    driver_path = r'C:\Users\bgreen3\Desktop\chromedriver'
+    driver_path = r'C:\Users\15314\PycharmProjects\Blog_Aggregator\chromedriver.exe'
+    options = webdriver.chrome.options.Options()
+    options.set_headless(headless=True)
     try:
-        driver = webdriver.Chrome(driver_path)
+        driver = webdriver.Chrome(driver_path, options = options)
     except:
         print('Something screwed up getting the driver. Make sure chrome is downloaded and the path is correct')
         return None
@@ -63,11 +66,6 @@ def time_usage(func):
         end_time = time.time()
         print(f"elapsed time: {(end_time - begin_time)}")
         return retval
+
     return wrapper
 
-
-def convert_txt_to_word(text, destination_path='Federalist Papers.docx'):
-    """Takes text string and saves it as a word document"""
-    doc = Document()
-    doc.add_paragraph(text)
-    doc.save(destination_path)

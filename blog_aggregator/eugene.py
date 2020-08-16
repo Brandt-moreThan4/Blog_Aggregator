@@ -1,7 +1,7 @@
 import re
 import sys
 import time
-sys.path.append('C:/Users/15314/source/repos/WebScraping/Scrapers')
+sys.path.append(r'C:\Users\15314\PycharmProjects\WebScraping\Scrapers')
 import scrapfunctions as scrappy
 import bs4
 from pathlib import Path

@@ -1,15 +1,13 @@
 """Contains classes used in the aswath scrapper"""
+import datetime
 
 
-
-
-class Post():
+class Post:
     date = ''
     title = ''
     author = ''
     body = ''
     url = ''
-
 
     def convert_date(self):
         """Try to convert the text date to datetime, but if it does not work then keep it
@@ -22,11 +20,6 @@ class Post():
 
     def __str__(self):
         return str(f'{self.date}\n{self.title}\n{self.body}')
-
-
-
-
-
 
 # IMG_FOLDER = Path(r'C:\Users\15314\source\repos\WebScraping\blog_aggregator\images')
 # cd = Path.cwd()
@@ -66,10 +59,8 @@ class Post():
 #             self.image_saved = True
 #         # except:
 #         #      pass 
-    
+
 
 #     def make_post_directory(self):
 #         if not self.post_dir.exists():
 #             self.post_dir.mkdir()
-
-
