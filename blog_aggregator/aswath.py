@@ -1,18 +1,20 @@
 import re
 import sys
-import datetime
+import time
 sys.path.append('C:/Users/15314/source/repos/WebScraping/Scrapers')
 import scrapfunctions as scrappy
 import bs4
 from pathlib import Path
-from post_classes import Post, Image
+from post_classes import Post
+import temp_setup
+from django.template.loader import get_template
 
 # YEARS = [str(2008 + i) for i in range(12)]
-# MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
 
 
 YEARS = ['2015']
-MONTHS = ['12']
+# MONTHS = ['12']
 
 invalid_urls = []
 all_posts = []
@@ -31,8 +33,11 @@ def main():
             else:
                 invalid_urls.append(url)    
     
-    # make_word_doc()
-    make_html()
+            global all_posts
+            make_html({'posts':all_posts}, year, month)
+            
+            all_posts = []
+            time.sleep(1)
 
 
 def page_is_valid(page_soup):    
@@ -56,57 +61,23 @@ def build_post(post_soup):
     new_post = Post()
     new_post.title = post_soup.find(class_='post-title').text
     new_post.date = post_soup.parent.parent.find(class_='date-header').text
-    new_post.body = get_post_body(post_soup, new_post)
+    new_post.body = str(post_soup)
 
     return new_post
 
 
 
-def get_post_body(post, new_post):
-    """Get the post body including images given the soup. Returns as a list."""
+def make_html(context, year, month):
+
+    posts_as_html = get_template("aswath.html").render(context)
     
-    # list containing tuples that have the type of content at index 0 and content at index 2
-    all_content = []
+    
+    year_dir = Path(r'C:\Users\15314\source\repos\WebScraping\blog_aggregator\aswath_posts')  / year
+    if year_dir.exists() == False:
+        year_dir.mkdir()
 
-    # Go through all of children and append all navigable strings and image src urls
-    # Also append their bs4 types as first index of tuple.
-    all_body_children = post.find(class_='post-body').descendants
-
-    for child in all_body_children:
-        if isinstance(child, bs4.element.NavigableString):
-            all_content.append(child)
-        elif isinstance(child, bs4.element.Tag):
-            if child.name == 'img':
-                if 'src' in child.attrs:
-                    image = Image(child, new_post)
-                    all_content.append(image)
-                    
-    return all_content
-
-
-
-def make_html():
-
-    with (Path.cwd() / 'test_aswath.html').open('w') as f:
-        for post in all_posts:
-            f.write('<div>----NEW POSTTTTT---</div>')
-            f.write(f'<div>----{post.title}---</div>')
-            f.write(f'<div>----{post.date}---</div>')
-            
-            chunks  = []
-            for content in post.body:
-                if isinstance(content, Image):
-                    all_chunk = ''.join(chunks)
-                    all_chunk = all_chunk.replace('\n', '<br/>')
-                    f.write(f"<div>{all_chunk}</div>")
-                    chunks = []
-                    f.write(f'<img src="{content.image_path}"></img>')
-                else:
-                    chunks.append(content)
-            if chunks:
-                f.write(f"<div>{''.join(chunks)}</div>")
-            f.write(f"<div>-------END POST------</div>")
-
+    with (year_dir / (month + '.html') ).open('w') as f:
+        f.write(posts_as_html)
 
 
 
@@ -115,10 +86,4 @@ if __name__ == "__main__":
     
     main()
 
-    print('Done!')
-        
-        # with open('texty.html', 'w') as f:
-        #     for post in all_posts:
-        #         post.convert_date()
-        #         f.write('<p>' + str(post.body) + '<p>')
                 
