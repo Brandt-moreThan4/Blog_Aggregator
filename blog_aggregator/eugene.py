@@ -2,7 +2,7 @@ import re
 import sys
 import time
 sys.path.append(r'C:\Users\15314\PycharmProjects\WebScraping\Scrapers')
-import scrapfunctions as scrappy
+import scrapefunctions as scrappy
 import bs4
 from pathlib import Path
 from post_classes import Post

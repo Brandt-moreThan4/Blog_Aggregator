@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from django.template.loader import get_template
 
 # sys.path.append(r'C:\Users\15314\PycharmProjects\Blog_Aggregator\Scrapers')
-import scrapfunctions as scrappy
+import scrapefunctions as scrappy
 from post_classes import Post
 import temp_setup
 

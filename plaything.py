@@ -4,7 +4,7 @@ import sqlite3
 
 
 if __name__ == '__main__':
-    conn = sqlite3.connect('orders.db')
+    conn = sqlite3.connect('scrapey.db')
     cur = conn.cursor()
 
     # cur.execute("""CREATE TABLE IF NOT EXISTS users(

@@ -4,7 +4,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from django.template.loader import get_template
 
-import scrapfunctions as scrappy
+import scrapefunctions as scrappy
 from post_classes import Post
 import temp_setup
 
