@@ -1,10 +1,35 @@
-from bs4 import BeautifulSoup
-import requests
-import time
-import time
+
 from pathlib import Path
-from selenium import webdriver
+import sqlite3
+
 
 if __name__ == '__main__':
-    print(help(webdriver))
-    print('lol')
+    conn = sqlite3.connect('orders.db')
+    cur = conn.cursor()
+
+    # cur.execute("""CREATE TABLE IF NOT EXISTS users(
+    #    userid INT PRIMARY KEY,
+    #    fname TEXT,
+    #    lname TEXT,
+    #    gender TEXT);
+    # """)
+
+    user = ('00002', 'Lois', 'Lane', 'Female')
+    cur.execute("INSERT INTO users VALUES(?, ?, ?, ?);", user)
+    more_users = [('00003', 'Peter', 'Parker', 'Male'), ('00004', 'Bruce', 'Wayne', 'male')]
+    cur.executemany("INSERT INTO users VALUES(?, ?, ?, ?);", more_users)
+    conn.commit()
+
+    # CREATE TABLE
+    # "Post"(
+    #     "id"
+    # INTEGER
+    # NOT
+    # NULL
+    # UNIQUE,
+    # "Field2"
+    # INTEGER,
+    # PRIMARY
+    # KEY("id"
+    # AUTOINCREMENT)
+    # );

@@ -2,7 +2,7 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/venv" />
+      <sourceFolder url="file://$MODULE_DIR$/blog_aggregator" isTestSource="false" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (Blog_Aggregator)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

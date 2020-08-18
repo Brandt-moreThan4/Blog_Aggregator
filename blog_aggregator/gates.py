@@ -9,19 +9,19 @@ from post_classes import Post
 import temp_setup
 
 driver = scrappy.get_chrome_driver()
-ROOT_URL = 'https://www.collaborativefund.com'
+ROOT_URL = 'https://www.gatesnotes.com'
 
-
-# print('lol')
 
 @scrappy.time_usage
 def main():
-    BLOG_ARCHIVE = 'https://stratechery.com/category/articles/'
+    BLOG_ARCHIVE = 'https://www.gatesnotes.com/All'
     driver.get(BLOG_ARCHIVE)
+    time.sleep(3)
     archive_page = BeautifulSoup(driver.page_source)
 
     while True:
-        post_on_page = archive_page.find_all('article')
+        post_on_page = archive_page.find_all(class_='TGN_site_ArticleItemSearchThumb')
+        # Above does not work for some reason
         posts = []
         for post_soup in post_on_page:
             posts.append(build_post(post_soup))
@@ -34,29 +34,22 @@ def main():
 def build_post(post_soup):
     """Send in the soup of a post and spit out one of my post objects"""
     new_post = Post()
-    new_post.title = post_soup.h1.text
-    new_post.date = post_soup.time.text
-    new_post.author = 'Ben Thompson'
-    new_post.url = post_soup.a['href']
-    new_post.body = get_content(new_post.url)
+    new_post.url = ROOT_URL + post_soup.a['href']
+    driver.get(new_post.url)
+    page_soup = BeautifulSoup(driver.page_source)
+    new_post.title = page_soup.find(class_='article_top_head').text
+    new_post.date = page_soup.find(class_='article_top_dateline').text
+    new_post.author = 'Bill Gates'
+    new_post.body = str(page_soup.find(class_='TGN_site_Articlecollumn'))
 
     return new_post
 
 
-def get_content(post_url):
-    driver.get(post_url)
-    page_soup = BeautifulSoup(driver.page_source)
-
-    return str(page_soup.article)
-
-
-
 def make_html(context):
-    post_as_html = get_template("stratechery.html").render(context)
-    collab_folder = Path(r'C:\Users\15314\PycharmProjects\Blog_Aggregator\blog_aggregator\stratechery_posts')
+    post_as_html = get_template("gates.html").render(context)
+    gates_folder = Path(r'C:\Users\15314\PycharmProjects\Blog_Aggregator\blog_aggregator\gates_posts')
     file_stem = 'lol.html'
-    # file_stem = scrappy.format_filename(str(post.date) + post.title + '.html')
-    post_file = collab_folder / file_stem
+    post_file = gates_folder / file_stem
 
     with post_file.open('w', encoding='utf-8') as f:
         f.write(post_as_html)
