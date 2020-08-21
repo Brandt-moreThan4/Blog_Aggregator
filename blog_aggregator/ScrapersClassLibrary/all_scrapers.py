@@ -20,22 +20,20 @@ class AswathScraper(SiteScraper):
     # Name should be same as name of posts.name that are created. This is used for sql queries later.
     NAME = 'Aswath Damodaron Blog'
 
-    # YEARS and MONTHS are used to loop through all of the blog urls.
-    # YEARS = [str(2008 + i) for i in range(12)]
-    # MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-    YEARS = ['2015']
-    MONTHS = ['12']
-
-    def get_historical_posts(self, years=YEARS, months=MONTHS):
+    def get_historical_posts(self):
         """Scrape all historical posts."""
 
-        for year in years:
-            for month in months:
+        # YEARS and MONTHS are used to loop through all of the blog urls.
+        YEARS = [str(2008 + i) for i in range(13)]
+        MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+
+        for year in YEARS:
+            for month in MONTHS:
                 page_url = self.BLOG_HOME + '/' + year + '/' + month
                 posts_on_page = self.get_posts_on_page(page_url)
                 if posts_on_page:
                     self.add_posts_to_db(posts_on_page)
-                time.sleep(3)
+                time.sleep(4)
 
     def get_posts_on_page(self, page_url):
         """Given a url, extract all the post on the page if the page actually contains posts."""
@@ -43,9 +41,6 @@ class AswathScraper(SiteScraper):
 
         if self.page_is_valid(page_soup):
             return [self.build_post(post_soup) for post_soup in page_soup.find_all(class_='post-outer')]
-        else:
-            # Only use below for debugging?
-            print(f'This url was skipped because it was invalid: {page_url}')
 
     @staticmethod
     def page_is_valid(page_soup):
@@ -65,20 +60,6 @@ class AswathScraper(SiteScraper):
 
         return new_post
 
-    @staticmethod
-    def add_posts_to_db(posts):
-        """Give a list of Post objects and add each to the db."""
-        conn = sqlite3.connect('scrapey.db')
-        cur = conn.cursor()
-
-        for post in posts:
-            cur.execute("""INSERT INTO Scrape_Posts (date, title, author, body, url, website) 
-               VALUES(?, ?, ?, ?, ?, ?, ?);""", [post.date, post.title, post.author, post.body, post.url, post.website,
-                                                 post.name])
-
-        conn.commit()
-        conn.close()
-
 
 class EugeneScraper(SiteScraper):
     """Inherits from SiteScraper. Implements specific functionality for scrapeing Aswath's website."""
@@ -92,22 +73,27 @@ class EugeneScraper(SiteScraper):
         """Scrape all historical posts."""
 
         current_url = self.BLOG_HOME
-
-        while True:
+        # Oldest url that was not read is below link.
+        # current_url = 'https://www.eugenewei.com/?offset=1411494003761'
+        while current_url is not None:
             print(f'Getting soup for {current_url}')
             page_soup = sf.get_soup(current_url)
-            posts_on_page = self.get_posts_on_page(page_soup)
-            self.add_posts_to_db(posts_on_page)
+            if self.page_is_valid(page_soup):
+                posts_on_page = self.get_posts_on_page(page_soup)
+                self.add_posts_to_db(posts_on_page)
+                time.sleep(15)
+            else:
+                print(f'Page is not valid for {current_url}')
 
             try:
                 current_url = self.ROOT_URL + page_soup.find(id='nextLink')['href']
             except:
                 current_url = None
 
-            time.sleep(2)
-            # if current_url is None:
-            if True:
-                break
+    @staticmethod
+    def page_is_valid(page_soup):
+        """Give the whole soup on the page and returns True if it contains at least one post on the page."""
+        return page_soup.find(class_='post') is not None
 
     def get_posts_on_page(self, page_soup):
         """Given a url, extract all the post on the page."""
@@ -117,7 +103,7 @@ class EugeneScraper(SiteScraper):
     def build_post(self, post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
         new_post = Post()
-        new_post.date = post_soup.footer.find(class_='date').text
+        new_post.date = self.get_date(post_soup)
         new_post.title = post_soup.header.h1.text
         new_post.author = 'Eugene Wei'
         self.clean_body_content(post_soup)
@@ -127,6 +113,13 @@ class EugeneScraper(SiteScraper):
         new_post.name = 'Eugene Wei Blog'
 
         return new_post
+
+    @staticmethod
+    def get_date(post_soup):
+        try:
+            return post_soup.footer.find(class_='date').text
+        except:
+            return ''
 
     @staticmethod
     def clean_body_content(post_soup):
@@ -181,8 +174,9 @@ class StratecheryScraper(SiteScraper):
         current_url = self.BLOG_HOME
 
         # On each loop, get all posts on the page and then try to click previous post link
-        while True:
-            print(f'Getting posts for {current_url}')
+        # As of 8/20/2020 there were 41 archive pages
+        while current_url is not None:
+            # print(f'Getting posts for {current_url}')
             self.driver.get(current_url)
             page_soup = BeautifulSoup(self.driver.page_source)
             posts_on_page = self.get_posts_on_page(page_soup)
@@ -192,9 +186,6 @@ class StratecheryScraper(SiteScraper):
                 current_url = page_soup.find(class_='nav-previous').a['href']
             except:
                 current_url = None
-
-            if current_url is None:
-                break
 
     def get_posts_on_page(self, page_soup):
         """Given a url, extract all the post on the page."""
@@ -212,7 +203,7 @@ class StratecheryScraper(SiteScraper):
         new_post.body = self.get_content(new_post.url)
         new_post.website = self.ROOT_URL
         new_post.name = 'Stratechery'
-        time.sleep(2)
+        time.sleep(10)
         return new_post
 
     def get_content(self, post_url):
@@ -226,7 +217,7 @@ class CollaborativeScraper(SiteScraper):
     ROOT_URL = 'https://www.collaborativefund.com'
     BLOG_HOME = 'https://www.collaborativefund.com/blog/archive'
     # Name should be same as name of posts.name that are created. This is used for sql queries later.
-    NAME = 'Collaberative Fund'
+    NAME = 'Collaborative Fund'
 
     # Declaring it up here so that all methods can use the chrome driver after it has been created.
     # This feels sloppy though?
@@ -240,12 +231,24 @@ class CollaborativeScraper(SiteScraper):
         self.driver.get(self.BLOG_HOME)
         page_soup = BeautifulSoup(self.driver.page_source)
         posts_on_page = self.get_posts_on_page(page_soup)
-        self.add_posts_to_db(posts_on_page)
 
-    def get_posts_on_page(self, page_soup):
+        # Below loop is to break this into chunks so that you don't try to do the entire history in one go. Any error
+        # Along the way would mean nothing is added to the database.
+        posts_chunk = []
+        for post_soup in posts_on_page:
+            posts_chunk.append(self.build_post(post_soup))
+            if len(posts_chunk) >= 50:
+                self.add_posts_to_db(posts_chunk)
+                posts_chunk = []
+
+        if posts_chunk:
+            self.add_posts_to_db(posts_chunk)
+
+    @staticmethod
+    def get_posts_on_page(page_soup):
         """Given a url, extract all the post on the page."""
 
-        return [self.build_post(post_soup) for post_soup in page_soup.find_all(class_='post-item')]
+        return [post_soup for post_soup in page_soup.find_all(class_='post-item')]
 
     def build_post(self, post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
@@ -256,8 +259,8 @@ class CollaborativeScraper(SiteScraper):
         new_post.url = self.ROOT_URL + post_soup.a['href']
         new_post.body = self.get_content(new_post.url)
         new_post.website = self.ROOT_URL
-        new_post.name = 'Collaberative Fund'
-        time.sleep(2)
+        new_post.name = 'Collaborative Fund'
+        time.sleep(4)
         return new_post
 
     def get_content(self, post_url):
@@ -273,6 +276,14 @@ class CollaborativeScraper(SiteScraper):
             image.attrs = {'src': CollaborativeScraper.get_image_src(image),
                            'alt': 'Sorry Brandt screwed up this image somehow.',
                            'class': 'img-fluid'}
+
+    @staticmethod
+    def get_image_src(img_tag):
+        """Hopefully get a valid url for the picture to use as the src"""
+        try:
+            return CollaborativeScraper.ROOT_URL + img_tag['src']
+        except:
+            return ''
 
 
 class OSAMScraper(SiteScraper):
@@ -293,7 +304,16 @@ class OSAMScraper(SiteScraper):
     def get_posts_on_page(self, page_soup):
         """Given a url, extract all the post on the page."""
 
-        return [self.build_post(post_soup) for post_soup in page_soup.find_all(class_='blogHeader')]
+        posts = []
+        for index, post_soup in enumerate(page_soup.find_all(class_='blogHeader')):
+            try:
+                posts.append(self.build_post(post_soup))
+
+            except:
+                print(f'Something screwed up for post {index+1} which is: {post_soup.find("h5")}')
+            time.sleep(4)
+
+        return posts
 
     def build_post(self, post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
@@ -312,7 +332,119 @@ class OSAMScraper(SiteScraper):
         return new_post
 
 
-if __name__ == '__main__':
-    test = OSAMScraper()
-    test.get_historical_posts()
-    test.make_html(name=test.NAME, folder_name='osam_posts', template_name='osam')
+class AmnesiaScraper(SiteScraper):
+    """Inherits from SiteScraper. Implements specific functionality for scrapeing Aswath's website."""
+
+    ROOT_URL = 'https://investoramnesia.com'
+    BLOG_HOME = 'https://investoramnesia.com/category/sunday-reads'
+    # Name should be same as name of posts.name that are created. This is used for sql queries later.
+    NAME = 'Amnesia'
+    count = 0
+
+    def get_historical_posts(self):
+        """Scrape all historical posts."""
+        """Insanely slow for some reason to get soup?"""
+        current_url = self.BLOG_HOME
+
+        while current_url is not None:
+            print(f'About to try to get post on page: {current_url}')
+            page_soup = sf.get_soup(current_url)
+            posts_on_page = self.get_posts_on_page(page_soup)
+            self.add_posts_to_db(posts_on_page)
+            try:
+                current_url = page_soup.find('a', class_='next')['href']
+            except:
+                current_url = None
+
+    def get_posts_on_page(self, page_soup: BeautifulSoup) -> list:
+        """Given a url, extract all the post on the page."""
+        posts = []
+        for index, post_soup in enumerate(page_soup.find_all(class_='post-content')):
+            try:
+                print(f'About to try for post: {index}')
+                posts.append(self.build_post(post_soup))
+            except:
+                print(f'Something screwed up for post {index+1}')
+            time.sleep(3)
+
+        return posts
+
+    def build_post(self, post_soup: BeautifulSoup) -> Post:
+        """Send in the soup of a post and spit out one of my post objects"""
+        new_post = Post()
+        self.count += 1
+        new_post.url = post_soup.a['href']
+
+        page_soup = sf.get_soup(new_post.url)
+        new_post.date = page_soup.find(class_='date').text.strip()
+        new_post.title = page_soup.find(id='page-header-wrap').h1.text
+        new_post.author = 'Jamie Catherwood'
+        new_post.body = str(page_soup.find(class_='post-area'))
+        new_post.website = self.ROOT_URL
+        new_post.name = 'Amnesia'
+
+        return new_post
+
+
+class GatesScraper(SiteScraper):
+    ROOT_URL = 'https://www.gatesnotes.com'
+    BLOG_HOME = 'https://www.gatesnotes.com/All'
+
+    # Name should be same as name of posts.name that are created. This is used for sql queries later.
+    NAME = 'Gates Notes'
+
+    # Declaring it up here so that all methods can use the chrome driver after it has been created.
+    # This feels sloppy though?
+    driver = None
+
+    def get_historical_posts(self):
+        """Only gets the posts on the first page. More post don't appear unless you scroll down to
+        the bottom of the page."""
+
+        # Navigate to blog home
+        self.driver = sf.get_chrome_driver()
+        current_url = self.BLOG_HOME
+
+        while True:
+            self.driver.get(current_url)
+            time.sleep(4)
+            page_soup = BeautifulSoup(self.driver.page_source)
+            posts_on_page = self.get_posts_on_page(page_soup)
+            self.add_posts_to_db(posts_on_page)
+
+            break
+
+    def get_posts_on_page(self, page_soup):
+        """Given a url, extract all the post on the page."""
+        posts = []
+        for index, post_soup in enumerate(page_soup.find_all(class_='TGN_site_ArticleItemSearchThumb')):
+            try:
+                print(f'About to try for post: {index}')
+                posts.append(self.build_post(post_soup))
+            except:
+                print(f'Something screwed up for post {index+1}')
+            time.sleep(3)
+
+        return posts
+
+    def build_post(self, post_soup):
+        """Send in the soup of a post and spit out one of my post objects"""
+
+        new_post = Post()
+        new_post.url = self.ROOT_URL + post_soup.a['href']
+
+        self.driver.get(new_post.url)
+        page_soup = BeautifulSoup(self.driver.page_source)
+
+        new_post.date = page_soup.find(class_='article_top_dateline').text
+        new_post.title = page_soup.find(class_='article_top_head').text
+        new_post.author = 'Bill Gates'
+
+        new_post.body = str(page_soup.find(class_='TGN_site_Articlecollumn'))
+        new_post.website = self.ROOT_URL
+        new_post.name = 'Gates Notes'
+
+        return new_post
+
+
+# if __name__ == '__main__':

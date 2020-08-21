@@ -12,7 +12,8 @@ class SiteScraper:
     ROOT_URL = None
     BLOG_HOME = None
 
-    def add_posts_to_db(self, posts):
+    @staticmethod
+    def add_posts_to_db(posts):
         """Give a list of Post objects and add each to the db."""
         conn = sqlite3.connect('scrapey.db')
         cur = conn.cursor()
@@ -26,13 +27,13 @@ class SiteScraper:
         conn.commit()
         conn.close()
 
-    def make_html(self, name, folder_name, template_name):
+    @staticmethod
+    def make_html(name: str, folder_name: str, template_name: str):
         conn = sqlite3.connect('scrapey.db')
         cur = conn.cursor()
-        query = cur.execute("""SELECT * FROM Scrape_Posts WHERE name=?""", [name])
+        query = cur.execute("""SELECT * FROM Scrape_Posts WHERE name=? LIMIT 3""", [name])
         posts = []
         for row in query:
-            print(row)
             post = Post()
             post.body = row[4]
             post.title = row[2]
@@ -42,7 +43,6 @@ class SiteScraper:
         folder = Path(r'C:\Users\15314\PycharmProjects\Blog_Aggregator\blog_aggregator') / folder_name
         with (folder / 'lol.html').open('w',  encoding='utf-8') as f:
             f.write(posts_as_html)
-
 
 
 class Post:

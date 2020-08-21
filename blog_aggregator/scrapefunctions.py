@@ -5,7 +5,7 @@ import time
 import string
 
 
-def get_soup(url):
+def get_soup(url: str):
     """Returns beautiful Soup object of the requested page or None if there was trouble somehwere along the way."""
 
     page_response = get_page_response(url)
@@ -51,7 +51,7 @@ def get_chrome_driver():
     options = webdriver.chrome.options.Options()
     options.set_headless(headless=True)
     try:
-        driver = webdriver.Chrome(driver_path, options = options)
+        driver = webdriver.Chrome(driver_path, options=options)
     except:
         print('Something screwed up getting the driver. Make sure chrome is downloaded and the path is correct')
         return None
@@ -68,4 +68,3 @@ def time_usage(func):
         return retval
 
     return wrapper
-
