@@ -3,6 +3,7 @@ from selenium import webdriver
 import requests
 import time
 import string
+from pathlib import Path
 
 
 def get_soup(url: str):
@@ -24,9 +25,9 @@ def get_soup(url: str):
 
 def format_filename(s):
     """Take a string and return a valid filename constructed from the string.
-Uses a whitelist approach: any characters not present in valid_chars are
-removed. Also spaces are replaced with underscores.
-"""
+    Uses a whitelist approach: any characters not present in valid_chars are
+    removed. Also spaces are replaced with underscores.
+    """
     valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
     filename = ''.join(c for c in s if c in valid_chars)
     filename = filename.replace(' ', '_')  # I don't like spaces in filenames.
@@ -47,7 +48,7 @@ def get_page_response(url):
 def get_chrome_driver():
     """Returns a selenium driver object to manipulate chrome"""
 
-    driver_path = r'C:\Users\15314\PycharmProjects\Blog_Aggregator\chromedriver.exe'
+    driver_path = Path(r'C:\Users\15314\OneDrive\Desktop') / 'chromedriver.exe'
     options = webdriver.chrome.options.Options()
     options.set_headless(headless=True)
     try:
