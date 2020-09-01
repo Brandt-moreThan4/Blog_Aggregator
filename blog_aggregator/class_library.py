@@ -1,15 +1,18 @@
 """Library of all the scraping classes."""
 
 import datetime
+import json
 import requests
 from pathlib import Path
 import time
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
 from django.utils.text import slugify
+
 import scrapefunctions as sf
 
 LOG_FILE = Path(__file__).parent / 'error_log.txt'
+WEB_ROOT = 'http://127.0.0.1:8000/'
 
 
 class SiteScrapper:
@@ -21,11 +24,9 @@ class SiteScrapper:
     def add_posts_to_db(posts: list):
 
         for posty in posts:
-            try:
-                post_dict = {'date': posty.date, 'title': posty.date, 'author': posty.body, 'body': posty.body,
-                             'url': posty.url, 'website': posty.website, 'name': posty.name, 'slug': posty.slug}
-                requests.post('http://127.0.0.1:8000/api/blogposts/')
-            except:
+
+            response = requests.post('http://127.0.0.1:8000/api/blog-external-list/', posty.as_dict())
+            if response != 201:
                 try:
                     error_msg = (f"{datetime.datetime.now()}--Well Shit. Something screwed up when trying to " +
                                  f"add the following post to the db: \n {str(posty)}\n")
@@ -36,10 +37,15 @@ class SiteScrapper:
 
                 with LOG_FILE.open('a') as f:
                     f.write(error_msg)
+            else:
+                print(f'Successfully uploaded:\n{posty}\n')
+
 
 
 class Posty:
-    _date = ''
+    """Love this"""
+
+    _date: datetime.date
     title: str
     author: str
     body: str
@@ -47,6 +53,21 @@ class Posty:
     website: str
     name: str
     soup: BeautifulSoup
+
+    def __init__(self, json_str: str = None):
+        if json_str:
+            self.load_json(json_str)
+
+    def load_json(self, json_str):
+        """Input a json string and use it to populate this posty"""
+        json_dick = json.loads(json_str)
+        self.date = json_dick.get('date')
+        self.title = json_dick.get('title')
+        self.author = json_dick.get('author')
+        self.body = json_dick.get('body')
+        self.url = json_dick.get('url')
+        self.website = json_dick.get('website')
+        self.name = json_dick.get('name')
 
     @property
     def slug(self):
@@ -64,7 +85,7 @@ class Posty:
         # If the value is already a date object and not a string, then don't try to convert it because
         # the parse function will throw an exception.
         if type(value) is datetime.datetime:
-            # Django model needs a datetime.date variable
+            # DJango model needs a datetime.date variable
             self._date = value.date()
         elif type(value) is datetime.date:
             self._date = value
@@ -74,6 +95,15 @@ class Posty:
             except:
                 # If convert doesn't work then just set it as the current time.
                 self._date = datetime.date.today()
+
+    def __str__(self):
+        return f"{self.name};{self.title}"
+
+    def as_dict(self):
+        """Convert this instance to a dictionary"""
+        return {'date': self.date, 'title': self.title, 'author': self.author,
+                'body': self.body, 'url': self.url, 'website': self.website,
+                'name': self.name, 'slug': self.slug}
 
 
 class AswathScraper(SiteScrapper):
@@ -86,8 +116,8 @@ class AswathScraper(SiteScrapper):
 
     def __init__(self):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        self.most_recent_post = Post.objects.filter(name=self.NAME).latest('date')
-        # I'll need to change this to get the info from my api?
+
+        self.most_recent_post = get_most_recent_post(self.NAME)
 
     def get_new_posts(self):
         """Check the front page for any new posts and download those if they are newer than the newest in the db."""
@@ -166,7 +196,7 @@ class EugeneScraper(SiteScrapper):
 
     def __init__(self):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        self.most_recent_post = Post.objects.filter(name=self.NAME).latest('date')
+        self.most_recent_post = get_most_recent_post(self.NAME)
 
     def get_new_posts(self):
         """Check the front page for any new posts and download those if they are newer than the newest in the db."""
@@ -274,7 +304,7 @@ class StratecheryScraper(SiteScrapper):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object.
             and get the chrome driver up and running.
         """
-        self.most_recent_post = Post.objects.filter(name=self.NAME).latest('date')
+        self.most_recent_post = get_most_recent_post(self.NAME)
         # Declaring it up here so that all methods can use the chrome driver after it has been created.
         self.driver = sf.get_chrome_driver()
 
@@ -359,7 +389,7 @@ class CollaborativeScraper(SiteScrapper):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object.
             and get the chrome driver up and running.
         """
-        self.most_recent_post = Post.objects.filter(name=self.NAME).latest('date')
+        self.most_recent_post = self.most_recent_post = get_most_recent_post(self.NAME)
         # Declaring it up here so that all methods can use the chrome driver after it has been created.
         self.driver = sf.get_chrome_driver()
 
@@ -461,7 +491,7 @@ class OSAMScraper(SiteScrapper):
 
     def __init__(self):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        self.most_recent_post = Post.objects.filter(name=self.NAME).latest('date')
+        self.most_recent_post = self.most_recent_post = get_most_recent_post(self.NAME)
 
     def get_new_posts(self):
         """Check the front page for any new posts and download those if they are newer than the newest in the db."""
@@ -489,9 +519,8 @@ class OSAMScraper(SiteScrapper):
     def is_in_db(self, post_soup):
         """Test if it is in the db by seeing if a post with that title is already in there somewhere."""
         post_title = self.get_title(post_soup)
-        query = Post.objects.filter(title=post_title, name=self.NAME)
-        # Empty queries will evaluate to false
-        return bool(query)
+        return post_is_in_db(value=post_title, filter_parameter='title')
+
 
     @staticmethod
     def get_title(post_soup):
@@ -545,7 +574,7 @@ class AmnesiaScraper(SiteScrapper):
 
     def __init__(self):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        self.most_recent_post = Post.objects.filter(name=self.NAME).latest('date')
+        self.most_recent_post = self.most_recent_post = get_most_recent_post(self.NAME)
 
     def get_new_posts(self):
         """Check the front page for any new posts and download those if they are newer than the newest in the db."""
@@ -560,9 +589,8 @@ class AmnesiaScraper(SiteScrapper):
     def is_in_db(self, post_soup):
         """Test if it is in the db by seeing if a post with that url is already in there somewhere."""
         post_url = post_soup.a['href']
-        query = Post.objects.filter(url=post_url, name=self.NAME)
-        # Empty queries will evaluate to false
-        return bool(query)
+        return post_is_in_db(value=post_url, filter_parameter='url')
+
 
     def build_post(self, post_soup: BeautifulSoup) -> Posty:
         """Send in the soup of a post and spit out one of my post objects"""
@@ -619,7 +647,7 @@ class GatesScraper(SiteScrapper):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object.
             and get the chrome driver up and running.
         """
-        self.most_recent_post = Post.objects.filter(name=self.NAME).latest('date')
+        self.most_recent_post = get_most_recent_post(self.NAME)
         # Declaring it up here so that all methods can use the chrome driver after it has been created.
         self.driver = sf.get_chrome_driver()
 
@@ -638,9 +666,7 @@ class GatesScraper(SiteScrapper):
     def is_in_db(self, post_soup):
         """Test if it is in the db by seeing if a post with that url is already in there somewhere."""
         post_url = self.ROOT_URL + post_soup.a['href']
-        query = Post.objects.filter(url=post_url, name=self.NAME)
-        # Empty queries will evaluate to false
-        return bool(query)
+        return post_is_in_db(value=post_url, filter_parameter='url')
 
     def build_post(self, post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
@@ -691,3 +717,33 @@ class GatesScraper(SiteScrapper):
             time.sleep(3)
 
         return posts
+
+
+def get_most_recent_post(blog_name: str = None) -> Posty:
+    """Get the most recent post. Filtered by the name if one is passed in."""
+
+    api_root = WEB_ROOT + 'api/blog-external-list/most-recent/'
+    if blog_name:
+        url = f'{api_root}?name={blog_name}'
+    else:
+        url = api_root
+
+    response = requests.get(url)
+    return Posty(response.text)
+
+
+def post_is_in_db(value: str, filter_parameter: str) -> bool:
+    """Test whether the post is in the db using either. I should update this to include the ability to filter by blog
+     name as well."""
+
+    url = WEB_ROOT + 'api/blog-external-list/'
+    if filter_parameter == 'url':
+        url = f'{url}?url={value}'
+    elif filter_parameter == 'title':
+        url = f'{url}?title={value}'
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        return True
+    else:
+        return False

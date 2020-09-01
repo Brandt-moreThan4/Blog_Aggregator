@@ -13,15 +13,7 @@ def scrape_new_data():
         scraper.get_new_posts()
 
 
+if __name__ == '__main__':
+    scrape_new_data()
 
-# scrape = SiteScrapper
-#
-# new_post = Posty()
-# new_post.date = '08/22/2012'
-# new_post.title = 'title har'
-# new_post.author = 'Aswath Damodaron'
-# new_post.body = 'bunch ofnsoup'
-# new_post.url = 'url'
-# new_post.website = 'webbby'
-# new_post.name = 'Aswath Damodaron Blog'
-# scrape.add_posts_to_db([new_post])
+
