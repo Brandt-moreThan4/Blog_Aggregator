@@ -74,7 +74,7 @@ class StratecheryScraper(SiteScrapper):
     ROOT_URL = 'https://stratechery.com/'
     BLOG_HOME = 'https://stratechery.com/category/articles'
     RSS_URL = 'https://rss.stratechery.passport.online/feed/rss/M5obc3noa81xuSLPuuEYif'
-    
+
     # Name should be same as name of posts.name that are created. This is used for sql queries later.
     NAME = 'Stratechery'
 
@@ -692,28 +692,11 @@ class GatesScraper(SiteScrapper):
 def get_most_recent_post(blog_name: str = None) -> Posty:
     """Get the most recent post. Filtered by the name if one is passed in."""
 
-    api_root = WEB_ROOT + 'api/blog-external-list/most-recent/'
-    if blog_name:
-        url = f'{api_root}?name={blog_name}'
-    else:
-        url = api_root
-
-    response = requests.get(url)
-    return Posty(response.text)
+    pass
 
 
 def post_is_in_db(value: str, filter_parameter: str) -> bool:
     """Test whether the post is in the db using either. I should update this to include the ability to filter by blog
      name as well."""
 
-    url = WEB_ROOT + 'api/blog-external-list/'
-    if filter_parameter == 'url':
-        url = f'{url}?url={value}'
-    elif filter_parameter == 'title':
-        url = f'{url}?title={value}'
-
-    response = requests.get(url)
-    if response.status_code == 200:
-        return True
-    else:
-        return False
+    pass
