@@ -5,8 +5,9 @@ from class_library import AswathScraper, EugeneScraper, StratecheryScraper, Coll
 
 
 def scrape_new_data():
-    scrapers = (AswathScraper(), EugeneScraper(), StratecheryScraper(), CollaborativeScraper(),
-                OSAMScraper(), AmnesiaScraper(), GatesScraper())
+    # scrapers = (AswathScraper(), EugeneScraper(), StratecheryScraper(), CollaborativeScraper(),
+    #             OSAMScraper(), AmnesiaScraper(), GatesScraper())
+    scrapers = [OSAMScraper(), CollaborativeScraper()]
 
     for scraper in scrapers:
         print(f'About to try to scrape: {scraper.NAME}')

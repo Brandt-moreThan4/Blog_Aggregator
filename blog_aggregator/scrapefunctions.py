@@ -6,13 +6,13 @@ import string
 from pathlib import Path
 
 
-def get_soup(url: str):
+def get_soup(url: str, parser:str='lxml'):
     """Returns beautiful Soup object of the requested page or None if there was trouble somehwere along the way."""
 
     page_response = get_page_response(url)
     if page_response is not None:
         try:
-            soup = BeautifulSoup(page_response.text)
+            soup = BeautifulSoup(page_response.text,parser)
         except:
             print('Trouble parsing the soup for: {}'.format(url))
             return None

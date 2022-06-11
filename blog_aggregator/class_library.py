@@ -12,7 +12,7 @@ from django.utils.text import slugify
 import scrapefunctions as sf
 
 LOG_FILE = Path(__file__).parent / 'error_log.txt'
-WEB_ROOT = 'http://127.0.0.1:8000/'
+WEB_ROOT = 'https://www.funwithbrandt.com/'
 
 
 class SiteScrapper:
@@ -25,7 +25,7 @@ class SiteScrapper:
 
         for posty in posts:
 
-            response = requests.post('http://127.0.0.1:8000/api/blog-external-list/', posty.as_dict())
+            response = requests.post(WEB_ROOT + '/api/blog-external-list/', posty.as_dict())
             if response != 201:
                 try:
                     error_msg = (f"{datetime.datetime.now()}--Well Shit. Something screwed up when trying to " +
