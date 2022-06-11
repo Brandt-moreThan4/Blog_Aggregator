@@ -23,4 +23,20 @@ articles = collab_soup.find_all('item')
 # guid.text # This is the permalink
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 print('done')

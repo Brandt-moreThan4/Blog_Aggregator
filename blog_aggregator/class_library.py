@@ -74,6 +74,7 @@ class StratecheryScraper(SiteScrapper):
     ROOT_URL = 'https://stratechery.com/'
     BLOG_HOME = 'https://stratechery.com/category/articles'
     RSS_URL = 'https://rss.stratechery.passport.online/feed/rss/M5obc3noa81xuSLPuuEYif'
+    
     # Name should be same as name of posts.name that are created. This is used for sql queries later.
     NAME = 'Stratechery'
 

@@ -1,17 +1,25 @@
 """High level module to run my scrapers. """
 
-from class_library import AswathScraper, EugeneScraper, StratecheryScraper, CollaborativeScraper, \
-    OSAMScraper, AmnesiaScraper, GatesScraper, SiteScrapper, Posty
+import logging
+logging.basicConfig(filename='blog_aggregator/scrape.log',level=logging.DEBUG, filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+
+from settings import SITES_TO_SCRAPE
+SITES_TO_SCRAPE = [5,7,8]
 
 
 def scrape_new_data():
-    # scrapers = (AswathScraper(), EugeneScraper(), StratecheryScraper(), CollaborativeScraper(),
-    #             OSAMScraper(), AmnesiaScraper(), GatesScraper())
-    scrapers = [OSAMScraper(), CollaborativeScraper()]
 
-    for scraper in scrapers:
-        print(f'About to try to scrape: {scraper.NAME}')
-        scraper.get_new_posts()
+    for scraper in SITES_TO_SCRAPE:
+        logging.info('!!info_message')
+        try:
+            5 + 'lol'
+        except Exception as e:
+            logging.error(f'{5+5}!!error_message',exc_info=True)
+            print(str(e))
+        5+5
+
+
+
 
 
 if __name__ == '__main__':
