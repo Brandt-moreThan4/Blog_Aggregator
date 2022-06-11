@@ -23,6 +23,8 @@ class SiteScrapper:
     # def get_new_posts(self):
     #     pass
 
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}'
 
 
 
@@ -77,6 +79,7 @@ class Posty:
                 'body': self.body, 'url': self.url, 'website': self.website,
                 'name': self.name, 'slug': self.slug}
 
+
     @staticmethod
     def from_series(row:pd.Series):
         post = Posty()
@@ -101,11 +104,7 @@ class StratecheryScraper(SiteScrapper):
     WEBSITE_NAME = 'Stratechery'
 
     def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object.
-            and get the chrome driver up and running.
-        """
         pass
-        # self.last_post = get_most_recent_post(self.WEBSITE_NAME)
 
     def get_posts_on_feed(self) -> List[Posty]:
         """Extract all articles in the RSS feed and convert them to Posty objects."""
@@ -118,12 +117,10 @@ class StratecheryScraper(SiteScrapper):
     def get_new_posts(self):
         """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
-
         self.posts_on_feed = self.get_posts_on_feed()
-        # Should I change below so that it use 'is post in db' instead?
         self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
 
-        self.add_posts_to_db(self.new_posts)
+        add_posts_to_db(self.new_posts)
 
 
     def build_post(self, post_soup:BeautifulSoup) -> Posty:
@@ -134,11 +131,48 @@ class StratecheryScraper(SiteScrapper):
         new_post.title = post_soup.find('title').text
         new_post.author = post_soup.find('author').text
         new_post.url = post_soup.find('guid').text
-        new_post.name = self.WEBSITE_NAME
+        new_post.website_name = self.WEBSITE_NAME
         return new_post
 
 
 
+class CollaborativeScraper(SiteScrapper):
+    ROOT_URL = 'https://www.collaborativefund.com'
+    BLOG_HOME = 'https://www.collaborativefund.com/blog/archive'
+    RSS_URL = 'http://feeds.feedburner.com/collabfund'
+
+    WEBSITE_NAME = 'Collaborative Fund'
+
+    def __init__(self):
+        pass
+
+
+    def get_new_posts(self):
+        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
+
+        self.posts_on_feed = self.get_posts_on_feed()
+        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+
+        add_posts_to_db(self.new_posts)
+
+
+    def get_posts_on_feed(self) -> List[Posty]:
+        """Extract all articles in the RSS feed and convert them to Posty objects."""
+
+        rss_soup = sf.get_soup(self.RSS_URL,'lxml')
+        return [self.build_post(post_soup) for post_soup in rss_soup.find_all('item')]
+
+
+    def build_post(self, post_soup:BeautifulSoup) -> Posty:
+        """Send in the soup of an article and spit out a posty object with data filled in."""
+
+        new_post = Posty()
+        new_post.date = parse(post_soup.find('pubdate').text).date()
+        new_post.title = post_soup.find('title').text
+        new_post.author = 'Unknown' # They don't provide the author in the feed unfortunately.
+        new_post.url = post_soup.find('guid').text
+        new_post.website_name = self.WEBSITE_NAME
+        return new_post
 
 
 
@@ -333,107 +367,6 @@ class EugeneScraper(SiteScrapper):
 
 
 
-class CollaborativeScraper(SiteScrapper):
-    ROOT_URL = 'https://www.collaborativefund.com'
-    BLOG_HOME = 'https://www.collaborativefund.com/blog/archive'
-
-    NAME = 'Collaborative Fund'
-
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object.
-            and get the chrome driver up and running.
-        """
-        self.most_recent_post = self.most_recent_post = get_most_recent_post(self.NAME)
-        # Declaring it up here so that all methods can use the chrome driver after it has been created.
-        self.driver = sf.get_chrome_driver()
-
-    def get_new_posts(self):
-        """Check the front page for any new posts and download those if they are newer than the newest in the db.
-            Also get that driver cranked up.
-        """
-
-        self.driver.get(self.BLOG_HOME)
-        page_soup = BeautifulSoup(self.driver.page_source)
-        posts_on_page = page_soup.find_all(class_='post-item')[:15]  # Only look at the most recent 15
-        new_posts = [self.build_post(post_soup) for post_soup in posts_on_page
-                     if self.get_post_date(post_soup) > self.most_recent_post.date]
-
-        self.add_posts_to_db(new_posts)
-
-    def build_post(self, post_soup):
-        """Send in the soup of a post and spit out one of my post objects"""
-        new_post = Posty()
-        new_post.date = self.get_post_date(post_soup)
-        new_post.title = post_soup.h4.text
-        new_post.author = post_soup.find(class_='js-author').text
-        new_post.url = self.ROOT_URL + post_soup.a['href']
-        new_post.body = self.get_content(new_post.url)
-        new_post.website = self.ROOT_URL
-        new_post.name = 'Collaborative Fund'
-        time.sleep(3)
-        return new_post
-
-    def get_content(self, post_url):
-        self.driver.get(post_url)
-        page_soup = BeautifulSoup(self.driver.page_source)
-        CollaborativeScraper.clean_images(page_soup.article)
-        return str(page_soup.article)
-
-    @staticmethod
-    def clean_images(post_soup):
-        images = post_soup.find_all('img')
-        for image in images:
-            image.attrs = {'src': CollaborativeScraper.get_image_src(image),
-                           'alt': 'Sorry Brandt screwed up this image somehow.',
-                           'class': 'img-fluid'}
-
-    @staticmethod
-    def get_image_src(img_tag) -> str:
-        """Hopefully get a valid url for the picture to use as the src"""
-        try:
-            return CollaborativeScraper.ROOT_URL + img_tag['src']
-        except:
-            return ''
-
-    @staticmethod
-    def get_post_date(post_soup):
-        """Give the post soup and return a datetime.date object witht he post date. If 
-            you can't get the date for some reason or can't parse it then just return a date of 1/1/1
-            so it will be obvious something is screwey if it gets into the db, but most likely will not 
-            get in since it only pulls in new posts."""
-
-        try:
-            date_string = post_soup.time.text.strip()
-            return parse(date_string).date()
-        except:
-            return datetime.date(1, 1, 1)
-
-    def get_historical_posts(self):
-        """Scrape all historical posts."""
-
-        # Navigate to blog home
-        self.driver = sf.get_chrome_driver()
-        self.driver.get(self.BLOG_HOME)
-        page_soup = BeautifulSoup(self.driver.page_source)
-        posts_on_page = self.get_posts_on_page(page_soup)
-
-        # Below loop is to break this into chunks so that you don't try to do the entire history in one go. Any error
-        # Along the way would mean nothing is added to the database.
-        posts_chunk = []
-        for post_soup in posts_on_page:
-            posts_chunk.append(self.build_post(post_soup))
-            if len(posts_chunk) >= 50:
-                self.add_posts_to_db(posts_chunk)
-                posts_chunk = []
-
-        if posts_chunk:
-            self.add_posts_to_db(posts_chunk)
-
-    @staticmethod
-    def get_posts_on_page(page_soup):
-        """Given a url, extract all the post on the page."""
-
-        return [post_soup for post_soup in page_soup.find_all(class_='post-item')]
 
 
 class OSAMScraper(SiteScrapper):

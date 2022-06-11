@@ -9,3 +9,8 @@ my personal website hasn't been updated with all of the new articles in awhile.
 * RSS
 * Logging
 * Prefect
+* Blogs 
+  * [Howard Marks](https://www.oaktreecapital.com/insights/memos)
+  * OSAM
+  * Aswath
+  * 
