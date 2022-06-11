@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from dateutil.parser import parse
 
 import scrapefunctions as sf
-from utils import load_db
+from utils import load_db, data_path
 
 df_db = load_db()
 
@@ -75,9 +75,7 @@ class Posty:
     # I should also add in a magic method for dictionary like access?
     def as_dict(self):
         """Convert this instance to a dictionary"""
-        return {'date': self.date, 'title': self.title, 'author': self.author,
-                'body': self.body, 'url': self.url, 'website': self.website,
-                'name': self.name, 'slug': self.slug}
+        return {'date': self.date, 'title': self.title, 'author': self.author, 'website_name': self.website_name, 'url':self.url}
 
 
     @staticmethod
@@ -92,8 +90,17 @@ class Posty:
         return post
 
 def add_posts_to_db(posty_list:List[Posty]):
-    for posty in posty_list:
-        print(f'Adding post: {posty}')
+
+    df_db = load_db()
+    post_dicts = [posty.as_dict() for posty in posty_list]
+    df_new = pd.DataFrame(post_dicts)
+
+    df_combined = pd.concat([df_db,df_new])
+
+    df_combined.to_csv(data_path / 'article_db.csv',index=False)
+    return df_combined
+    # for posty in posty_list:
+    #     print(f'Adding post: {posty}')
 
 
 class StratecheryScraper(SiteScrapper):
@@ -256,119 +263,6 @@ class AswathScraper(SiteScrapper):
         return page_soup.find(class_='post-body') is not None
 
 
-class EugeneScraper(SiteScrapper):
-    """Fun stuff"""
-
-    ROOT_URL = 'https://www.eugenewei.com'
-    BLOG_HOME = ROOT_URL
-    # Name is used in several places to query the db for a specific blog.
-    NAME = 'Eugene Wei Blog'
-
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        self.most_recent_post = get_most_recent_post(self.NAME)
-
-    def get_new_posts(self):
-        """Check the front page for any new posts and download those if they are newer than the newest in the db."""
-
-        page_soup = sf.get_soup(self.BLOG_HOME)
-        posts_on_page = page_soup.find_all(class_='post')
-        new_posts = [self.build_post(post_soup) for post_soup in posts_on_page
-                     if self.get_post_date(post_soup) > self.most_recent_post.date]
-
-        self.add_posts_to_db(new_posts)
-
-    @staticmethod
-    def get_post_date(post_soup):
-        """Give the post soup and return a datetime.date object witht he post date. If 
-            you can't get the date for some reason or can't parse it then just return a date of 1/1/1
-            so it will be obvious something is screwey if it gets into the db, but most likely will not 
-            get in since it only pulls in new posts."""
-
-        try:
-            date_string = post_soup.footer.find(class_='date').text.strip()
-            return parse(date_string).date()
-        except:
-            return datetime.date(1, 1, 1)
-
-    def build_post(self, post_soup):
-        """Send in the soup of a post and spit out one of my post objects"""
-        new_post = Posty()
-        new_post.date = self.get_post_date(post_soup)
-        new_post.title = post_soup.header.h1.text
-        new_post.author = 'Eugene Wei'
-        self.clean_images(post_soup)
-        new_post.body = str(post_soup)
-        new_post.url = self.ROOT_URL + post_soup.h1.a.get('href')
-        new_post.website = self.ROOT_URL
-        new_post.name = 'Eugene Wei Blog'
-
-        return new_post
-
-    @staticmethod
-    def clean_images(post_soup):
-        """Makes sure the correct src attribute is specified in the image tags.
-        This is needed because there is some javascript that loads the images I think which screws it up a bit
-        if you just copy the image tag without also bringing in the js, which I do not.
-        Also adding 'img-fluid' class to images to make them more manageable later on."""
-
-        images = post_soup.find_all('img')
-        for image in images:
-            image.attrs = {'src': EugeneScraper.get_image_src(image),
-                           'alt': 'Sorry Brandt screwed up this image somehow.',
-                           'class': 'img-fluid'}
-            image.parent.attrs = {'style': 'max-width:700px;'}
-
-    @staticmethod
-    def get_image_src(img_tag):
-        """Hopefully get a valid url for the picture to use as the src.
-        One of these should point to the url where the image is stored."""
-
-        if img_tag.get('src') is not None:
-            return img_tag['src']
-        elif img_tag.get('data-src') is not None:
-            return img_tag['data-src']
-        elif img_tag.get('data-image') is not None:
-            return img_tag['data-image']
-        else:
-            return ''
-
-    def get_historical_posts(self):
-        """Scrape all historical posts."""
-
-        current_url = self.BLOG_HOME
-
-        while current_url is not None:
-            print(f'Getting soup for {current_url}')
-            page_soup = sf.get_soup(current_url)
-            if self.page_is_valid(page_soup):
-                posts_on_page = self.get_posts_on_page(page_soup)
-                self.add_posts_to_db(posts_on_page)
-                time.sleep(15)
-            else:
-                print(f'Page is not valid for {current_url}')
-
-            try:
-                current_url = self.ROOT_URL + page_soup.find(id='nextLink')['href']
-            except:
-                current_url = None
-
-    @staticmethod
-    def page_is_valid(page_soup):
-        """Give the whole soup on the page and returns True if it contains at least one post on the page."""
-        return page_soup.find(class_='post') is not None
-
-    def get_posts_on_page(self, page_soup):
-        """Given a url, extract all the post on the page."""
-
-        return [self.build_post(post_soup) for post_soup in page_soup.find_all(class_='post')]
-
-
-
-
-
-
-
 class OSAMScraper(SiteScrapper):
     """Inherits from . Implements specific functionality for scrapeing Aswath's website."""
 
@@ -389,24 +283,6 @@ class OSAMScraper(SiteScrapper):
                      if not self.is_in_db(post_soup)]
 
         self.add_posts_to_db(new_posts)
-
-    @staticmethod
-    def get_post_date(post_soup):
-        """Give the post soup and return a datetime.date object witht he post date. If 
-            you can't get the date for some reason or can't parse it then just return a date of 1/1/1
-            so it will be obvious something is screwey if it gets into the db, but most likely will not 
-            get in since it only pulls in new posts."""
-
-        try:
-            date_string = post_soup.find(class_='divDate').text.strip()
-            return parse(date_string).date()
-        except:
-            return datetime.date(1, 1, 1)
-
-    def is_in_db(self, post_soup):
-        """Test if it is in the db by seeing if a post with that title is already in there somewhere."""
-        post_title = self.get_title(post_soup)
-        return post_is_in_db(value=post_title, filter_parameter='title')
 
 
     @staticmethod
@@ -429,12 +305,6 @@ class OSAMScraper(SiteScrapper):
 
         return new_post
 
-    def get_historical_posts(self):
-        """Scrape all historical posts."""
-
-        page_soup = sf.get_soup(self.BLOG_HOME)
-        posts_on_page = self.get_posts_on_page(page_soup)
-        self.add_posts_to_db(posts_on_page)
 
     def get_posts_on_page(self, page_soup):
         """Given a url, extract all the post on the page."""
@@ -450,161 +320,10 @@ class OSAMScraper(SiteScrapper):
 
         return posts
 
-
-class AmnesiaScraper(SiteScrapper):
-    """Inherits from . Implements specific functionality for scrapeing Aswath's website."""
-
-    ROOT_URL = 'https://investoramnesia.com'
-    BLOG_HOME = 'https://investoramnesia.com/category/sunday-reads'
-
-    NAME = 'Amnesia'
-
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        self.most_recent_post = self.most_recent_post = get_most_recent_post(self.NAME)
-
-    def get_new_posts(self):
-        """Check the front page for any new posts and download those if they are newer than the newest in the db."""
-
-        page_soup = sf.get_soup(self.BLOG_HOME)
-        posts_on_page = page_soup.find_all(class_='post-content')
-        new_posts = [self.build_post(post_soup) for post_soup in posts_on_page
-                     if not self.is_in_db(post_soup)]
-
-        self.add_posts_to_db(new_posts)
-
-    def is_in_db(self, post_soup):
-        """Test if it is in the db by seeing if a post with that url is already in there somewhere."""
-        post_url = post_soup.a['href']
-        return post_is_in_db(value=post_url, filter_parameter='url')
+class AlphaArchScraper(SiteScrapper):
+    pass
 
 
-    def build_post(self, post_soup: BeautifulSoup) -> Posty:
-        """Send in the soup of a post and spit out one of my post objects"""
-        new_post = Posty()
-        new_post.url = post_soup.a['href']
-
-        page_soup = sf.get_soup(new_post.url)
-        new_post.date = page_soup.find(class_='date').text.strip()
-        new_post.title = page_soup.find(id='page-header-wrap').h1.text
-        new_post.author = 'Jamie Catherwood'
-        new_post.body = str(page_soup.find(class_='post-area'))
-        new_post.website = self.ROOT_URL
-        new_post.name = 'Amnesia'
-
-        return new_post
-
-    def get_historical_posts(self):
-        """Scrape all historical posts."""
-        """Insanely slow for some reason to get soup?"""
-        current_url = self.BLOG_HOME
-
-        while current_url is not None:
-            print(f'About to try to get post on page: {current_url}')
-            page_soup = sf.get_soup(current_url)
-            posts_on_page = self.get_posts_on_page(page_soup)
-            self.add_posts_to_db(posts_on_page)
-            try:
-                current_url = page_soup.find('a', class_='next')['href']
-            except:
-                current_url = None
-
-    def get_posts_on_page(self, page_soup: BeautifulSoup) -> list:
-        """Given a url, extract all the post on the page."""
-        posts = []
-        for index, post_soup in enumerate(page_soup.find_all(class_='post-content')):
-            try:
-                print(f'About to try for post: {index}')
-                posts.append(self.build_post(post_soup))
-            except:
-                print(f'Something screwed up for post {index + 1}')
-            time.sleep(3)
-
-        return posts
-
-
-class GatesScraper(SiteScrapper):
-    ROOT_URL = 'https://www.gatesnotes.com'
-    BLOG_HOME = 'https://www.gatesnotes.com/All'
-
-    # Name should be same as name of posts.name that are created. This is used for sql queries later.
-    NAME = 'Gates Notes'
-
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object.
-            and get the chrome driver up and running.
-        """
-        self.most_recent_post = get_most_recent_post(self.NAME)
-        # Declaring it up here so that all methods can use the chrome driver after it has been created.
-        self.driver = sf.get_chrome_driver()
-
-    def get_new_posts(self):
-        """Check the front page for any new posts and download those if they are newer than the newest in the db."""
-
-        self.driver.get(self.BLOG_HOME)
-        time.sleep(4)  # Sleep to make sure the page is fully loaded.
-        page_soup = BeautifulSoup(self.driver.page_source)
-        posts_on_page = page_soup.find_all(class_='TGN_site_ArticleItemSearchThumb')
-        new_posts = [self.build_post(post_soup) for post_soup in posts_on_page
-                     if not self.is_in_db(post_soup)]
-
-        self.add_posts_to_db(new_posts)
-
-    def is_in_db(self, post_soup):
-        """Test if it is in the db by seeing if a post with that url is already in there somewhere."""
-        post_url = self.ROOT_URL + post_soup.a['href']
-        return post_is_in_db(value=post_url, filter_parameter='url')
-
-    def build_post(self, post_soup):
-        """Send in the soup of a post and spit out one of my post objects"""
-
-        new_post = Posty()
-        new_post.url = self.ROOT_URL + post_soup.a['href']
-
-        self.driver.get(new_post.url)
-        page_soup = BeautifulSoup(self.driver.page_source)
-
-        new_post.date = page_soup.find(class_='article_top_dateline').text
-        new_post.title = page_soup.find(class_='article_top_head').text
-        new_post.author = 'Bill Gates'
-
-        new_post.body = str(page_soup.find(class_='TGN_site_Articlecollumn'))
-        new_post.website = self.ROOT_URL
-        new_post.name = 'Gates Notes'
-        time.sleep(1)
-
-        return new_post
-
-    def get_historical_posts(self):
-        """Only gets the posts on the first page. More post don't appear unless you scroll down to
-        the bottom of the page."""
-
-        # Navigate to blog home
-        self.driver = sf.get_chrome_driver()
-        current_url = self.BLOG_HOME
-
-        while True:
-            self.driver.get(current_url)
-            time.sleep(4)
-            page_soup = BeautifulSoup(self.driver.page_source)
-            posts_on_page = self.get_posts_on_page(page_soup)
-            self.add_posts_to_db(posts_on_page)
-
-            break
-
-
-    def get_posts_on_page(self, page_soup):
-        """Given a url, extract all the post on the page."""
-        posts = []
-        for index, post_soup in enumerate(page_soup.find_all(class_='TGN_site_ArticleItemSearchThumb')):
-            try:
-                print(f'About to try for post: {index}')
-                posts.append(self.build_post(post_soup))
-            except:
-                print(f'Something screwed up for post {index + 1}')
-            time.sleep(3)
-
-        return posts
 
 
 def get_most_recent_post(website_name: str = None) -> Posty:

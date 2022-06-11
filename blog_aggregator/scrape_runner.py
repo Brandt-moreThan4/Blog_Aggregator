@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.WARNING)
 import class_library
 from settings import SITES_TO_SCRAPE
 
-SITES_TO_SCRAPE = [class_library.CollaborativeScraper]
+SITES_TO_SCRAPE = [class_library.CollaborativeScraper, class_library.StratecheryScraper]
 
 
 
@@ -35,3 +35,4 @@ if __name__ == '__main__':
     scrape_new_data()
 
 
+    print('scraping is done!')
