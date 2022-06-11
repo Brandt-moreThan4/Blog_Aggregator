@@ -11,40 +11,19 @@ from django.utils.text import slugify
 
 import scrapefunctions as sf
 
-LOG_FILE = Path(__file__).parent / 'error_log.txt'
-WEB_ROOT = 'https://www.funwithbrandt.com/'
-
 
 class SiteScrapper:
     """Generic site scrapper that the rest will inherit from. This is kind of silly tho since the only method is
     a static method right?
     """
-
-    @staticmethod
-    def add_posts_to_db(posts: list):
-
-        for posty in posts:
-
-            response = requests.post(WEB_ROOT + '/api/blog-external-list/', posty.as_dict())
-            if response != 201:
-                try:
-                    error_msg = (f"{datetime.datetime.now()}--Well Shit. Something screwed up when trying to " +
-                                 f"add the following post to the db: \n {str(posty)}\n")
-                except:
-                    # In case there is trouble representing the post as as a string.
-                    error_msg = (
-                        f"{datetime.datetime.now()}--Well Shit. Something screwed up when trying to add posts to db")
-
-                with LOG_FILE.open('a') as f:
-                    f.write(error_msg)
-            else:
-                print(f'Successfully uploaded:\n{posty}\n')
+    pass
 
 
 
 class Posty:
-    """Love this"""
+    """Class to store the information about each posts. It is basically just a dataclass."""
 
+    # Only reason for doing below is that it is nice to know what this object should expect to have.
     _date: datetime.date
     title: str
     author: str
@@ -54,25 +33,8 @@ class Posty:
     name: str
     soup: BeautifulSoup
 
-    def __init__(self, json_str: str = None):
-        if json_str:
-            self.load_json(json_str)
-
-    def load_json(self, json_str):
-        """Input a json string and use it to populate this posty"""
-        json_dick = json.loads(json_str)
-        self.date = json_dick.get('date')
-        self.title = json_dick.get('title')
-        self.author = json_dick.get('author')
-        self.body = json_dick.get('body')
-        self.url = json_dick.get('url')
-        self.website = json_dick.get('website')
-        self.name = json_dick.get('name')
-
-    @property
-    def slug(self):
-        """make a slug out of title"""
-        return slugify(self.title)
+    def __init__(self):
+        pass
 
     @property
     def date(self):
@@ -99,11 +61,100 @@ class Posty:
     def __str__(self):
         return f"{self.name};{self.title}"
 
+    # I should also add in a magic method for dictionary like access?
     def as_dict(self):
         """Convert this instance to a dictionary"""
         return {'date': self.date, 'title': self.title, 'author': self.author,
                 'body': self.body, 'url': self.url, 'website': self.website,
                 'name': self.name, 'slug': self.slug}
+
+
+
+class StratecheryScraper(SiteScrapper):
+    ROOT_URL = 'https://stratechery.com/'
+    BLOG_HOME = 'https://stratechery.com/category/articles'
+    RSS_URL = 'https://rss.stratechery.passport.online/feed/rss/M5obc3noa81xuSLPuuEYif'
+    # Name should be same as name of posts.name that are created. This is used for sql queries later.
+    NAME = 'Stratechery'
+
+    def __init__(self):
+        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object.
+            and get the chrome driver up and running.
+        """
+        self.most_recent_post = get_most_recent_post(self.NAME)
+        # Declaring it up here so that all methods can use the chrome driver after it has been created.
+        self.driver = sf.get_chrome_driver()
+
+    def get_new_posts(self):
+        """Check the front page for any new posts and download those if they are newer than the newest in the db."""
+
+        self.driver.get(self.BLOG_HOME)
+        page_soup = BeautifulSoup(self.driver.page_source)
+        posts_on_page = page_soup.find_all('article')
+        new_posts = [self.build_post(post_soup) for post_soup in posts_on_page
+                     if self.get_post_date(post_soup) > self.most_recent_post.date]
+
+        self.add_posts_to_db(new_posts)
+
+    @staticmethod
+    def get_post_date(post_soup):
+        """Give the post soup and return a datetime.date object witht he post date. If 
+            you can't get the date for some reason or can't parse it then just return a date of 1/1/1
+            so it will be obvious something is screwey if it gets into the db, but most likely will not 
+            get in since it only pulls in new posts."""
+
+        try:
+            date_string = post_soup.time.text.strip()
+            return parse(date_string).date()
+        except:
+            return datetime.date(1, 1, 1)
+
+    def build_post(self, post_soup):
+        """Send in the soup of a post and spit out one of my post objects"""
+
+        new_post = Posty()
+        new_post.date = self.get_post_date(post_soup)
+        new_post.title = post_soup.h1.text
+        new_post.author = 'Ben Thompson'
+        new_post.url = post_soup.a['href']
+        new_post.body = self.get_content(new_post.url)
+        new_post.website = self.ROOT_URL
+        new_post.name = 'Stratechery'
+        # Remember to try not be a dick!
+        time.sleep(3)
+        return new_post
+
+    def get_content(self, post_url):
+        self.driver.get(post_url)
+        page_soup = BeautifulSoup(self.driver.page_source)
+
+        return str(page_soup.article)
+
+    def get_historical_posts(self):
+        """Scrape all historical posts."""
+
+        # Start on the first page
+        current_url = self.BLOG_HOME
+
+        # On each loop, get all posts on the page and then try to click previous post link
+        # As of 8/20/2020 there were 41 archive pages
+        while current_url is not None:
+            # print(f'Getting posts for {current_url}')
+            self.driver.get(current_url)
+            page_soup = BeautifulSoup(self.driver.page_source)
+            posts_on_page = self.get_posts_on_page(page_soup)
+            self.add_posts_to_db(posts_on_page)
+
+            try:
+                current_url = page_soup.find(class_='nav-previous').a['href']
+            except:
+                current_url = None
+
+    def get_posts_on_page(self, page_soup):
+        """Given a url, extract all the post on the page."""
+
+        return [self.build_post(post_soup) for post_soup in page_soup.find_all('article')]
+
 
 
 class AswathScraper(SiteScrapper):
@@ -294,89 +345,7 @@ class EugeneScraper(SiteScrapper):
         return [self.build_post(post_soup) for post_soup in page_soup.find_all(class_='post')]
 
 
-class StratecheryScraper(SiteScrapper):
-    ROOT_URL = 'https://stratechery.com/'
-    BLOG_HOME = 'https://stratechery.com/category/articles'
-    # Name should be same as name of posts.name that are created. This is used for sql queries later.
-    NAME = 'Stratechery'
 
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object.
-            and get the chrome driver up and running.
-        """
-        self.most_recent_post = get_most_recent_post(self.NAME)
-        # Declaring it up here so that all methods can use the chrome driver after it has been created.
-        self.driver = sf.get_chrome_driver()
-
-    def get_new_posts(self):
-        """Check the front page for any new posts and download those if they are newer than the newest in the db."""
-
-        self.driver.get(self.BLOG_HOME)
-        page_soup = BeautifulSoup(self.driver.page_source)
-        posts_on_page = page_soup.find_all('article')
-        new_posts = [self.build_post(post_soup) for post_soup in posts_on_page
-                     if self.get_post_date(post_soup) > self.most_recent_post.date]
-
-        self.add_posts_to_db(new_posts)
-
-    @staticmethod
-    def get_post_date(post_soup):
-        """Give the post soup and return a datetime.date object witht he post date. If 
-            you can't get the date for some reason or can't parse it then just return a date of 1/1/1
-            so it will be obvious something is screwey if it gets into the db, but most likely will not 
-            get in since it only pulls in new posts."""
-
-        try:
-            date_string = post_soup.time.text.strip()
-            return parse(date_string).date()
-        except:
-            return datetime.date(1, 1, 1)
-
-    def build_post(self, post_soup):
-        """Send in the soup of a post and spit out one of my post objects"""
-
-        new_post = Posty()
-        new_post.date = self.get_post_date(post_soup)
-        new_post.title = post_soup.h1.text
-        new_post.author = 'Ben Thompson'
-        new_post.url = post_soup.a['href']
-        new_post.body = self.get_content(new_post.url)
-        new_post.website = self.ROOT_URL
-        new_post.name = 'Stratechery'
-        # Remember to try not be a dick!
-        time.sleep(3)
-        return new_post
-
-    def get_content(self, post_url):
-        self.driver.get(post_url)
-        page_soup = BeautifulSoup(self.driver.page_source)
-
-        return str(page_soup.article)
-
-    def get_historical_posts(self):
-        """Scrape all historical posts."""
-
-        # Start on the first page
-        current_url = self.BLOG_HOME
-
-        # On each loop, get all posts on the page and then try to click previous post link
-        # As of 8/20/2020 there were 41 archive pages
-        while current_url is not None:
-            # print(f'Getting posts for {current_url}')
-            self.driver.get(current_url)
-            page_soup = BeautifulSoup(self.driver.page_source)
-            posts_on_page = self.get_posts_on_page(page_soup)
-            self.add_posts_to_db(posts_on_page)
-
-            try:
-                current_url = page_soup.find(class_='nav-previous').a['href']
-            except:
-                current_url = None
-
-    def get_posts_on_page(self, page_soup):
-        """Given a url, extract all the post on the page."""
-
-        return [self.build_post(post_soup) for post_soup in page_soup.find_all('article')]
 
 
 class CollaborativeScraper(SiteScrapper):
