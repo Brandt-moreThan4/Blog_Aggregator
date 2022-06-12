@@ -188,8 +188,8 @@ class AswathScraper(SiteScrapper):
 
         add_posts_to_db(self.new_posts)
 
-
-    def build_post(self, post_soup):
+    @staticmethod
+    def build_post(post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
         new_post = Posty()
         new_post.date = post_soup.parent.parent.find(class_='date-header').text.strip()
@@ -201,15 +201,13 @@ class AswathScraper(SiteScrapper):
         return new_post
 
 
-    def get_posts_on_page(self, page_url):
+    def get_posts_on_page(page_url):
         """Given a url, extract all the post on the page and build the 
         posty object if the page actually contains posts."""
 
         page_soup = sf.get_soup(page_url)
 
-        return [self.build_post(post_soup) for post_soup in page_soup.find_all(class_='post-outer')]
-
-
+        return [AswathScraper.build_post(post_soup) for post_soup in page_soup.find_all(class_='post-outer')]
 
 
 
@@ -223,56 +221,74 @@ class OSAMScraper(SiteScrapper):
 
     def __init__(self):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        self.most_recent_post = self.most_recent_post = get_most_recent_post(self.NAME)
+        pass
+
 
     def get_new_posts(self):
-        """Check the front page for any new posts and download those if they are newer than the newest in the db."""
+        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
-        page_soup = sf.get_soup(self.BLOG_HOME)
-        posts_on_page = page_soup.find_all(class_='blogHeader')[:5]  # Just look at first 5
-        new_posts = [self.build_post(post_soup) for post_soup in posts_on_page
-                     if not self.is_in_db(post_soup)]
+        self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
+        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
 
-        self.add_posts_to_db(new_posts)
-
+        add_posts_to_db(self.new_posts)
 
     @staticmethod
-    def get_title(post_soup):
-        return post_soup.h5.text
+    def get_posts_on_page(page_url,posts_to_scape:int=20):
+        """Given a url, extract all the post on the page and build the 
+        posty objects if the page actually contains posts."""
 
-    def build_post(self, post_soup):
+        page_soup = sf.get_soup(page_url)
+        return [OSAMScraper.build_post(post_soup) for post_soup in page_soup.find_all(class_='blogHeader')[:posts_to_scape]]
+
+    @staticmethod
+    def build_post(post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
         new_post = Posty()
-        new_post.date = self.get_post_date(post_soup)
-        new_post.title = self.get_title(post_soup)
-        new_post.url = self.ROOT_URL + post_soup.a['href']
+        new_post.date = post_soup.find(_class='divDate')
+        new_post.title = post_soup.h5.text
+        new_post.url = OSAMScraper.ROOT_URL + post_soup.a['href']
 
         # Can't find author or body from the Commentary archive page.
         page_soup = sf.get_soup(new_post.url).find(id='divcontent')
-        new_post.author = page_soup.h1.find_next().text
-        new_post.body = str(page_soup)
-        new_post.website = self.ROOT_URL
-        new_post.name = 'OSAM'
+        new_post.author = page_soup.h1.find_next().text[3:] # Teh first 3 characters are not actually the author
+        new_post.website_name = 'OSAM'
 
         return new_post
 
 
-    def get_posts_on_page(self, page_soup):
-        """Given a url, extract all the post on the page."""
+class MoneyBankingScaper(SiteScrapper):
+    ROOT_URL = 'https://www.moneyandbanking.com/'
+    BLOG_HOME = 'https://osam.com/Commentary'    
+    RSS_URL = 'https://www.moneyandbanking.com/commentary?format=rss'
+    WEBSITE_NAME = 'Money, Banking and Financial Markets'
 
-        posts = []
-        for index, post_soup in enumerate(page_soup.find_all(class_='blogHeader')):
-            try:
-                posts.append(self.build_post(post_soup))
+    def __init__(self):
+        pass
 
-            except:
-                print(f'Something screwed up for post {index + 1} which is: {post_soup.find("h5")}')
-            time.sleep(4)
+    @staticmethod
+    def get_posts_on_feed() -> List[Posty]:
+        """Extract all articles in the RSS feed and convert them to Posty objects."""
 
-        return posts
+        rss_soup = sf.get_soup(MoneyBankingScaper.RSS_URL,'xml')
+        return [MoneyBankingScaper.build_post(post_soup) for post_soup in rss_soup.find_all('item')]
+
+    @staticmethod
+    def build_post(post_soup:BeautifulSoup) -> Posty:
+        """Send in the soup of an article and spit out a posty object with data filled in."""
+
+        new_post = Posty()
+        new_post.date = parse(post_soup.find('pubDate').text).date()
+        new_post.title = post_soup.find('title').text
+        new_post.author = post_soup.find('creator').text
+        new_post.url = post_soup.find('link').text
+        new_post.website_name = MoneyBankingScaper.WEBSITE_NAME
+        return new_post
+
+
 
 class AlphaArchScraper(SiteScrapper):
     pass
+    # Scrape both blog and white papers
 
 
 
@@ -282,7 +298,6 @@ def get_most_recent_post(website_name: str = None) -> Posty:
     last_post_row:pd.Series = df_db.query(f'website_name == "{website_name}"').sort_values(by='date',ascending=False)
     posty = Posty.from_series(last_post_row)
     return posty
-
 
 
 def post_is_in_db(posty:Posty) -> bool:
