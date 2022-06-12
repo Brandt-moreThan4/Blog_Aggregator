@@ -12,9 +12,7 @@ logging.basicConfig(level=logging.WARNING)
 import class_library
 from settings import SITES_TO_SCRAPE
 
-SITES_TO_SCRAPE = [class_library.MoneyBankingScaper]
-
-
+# SITES_TO_SCRAPE = [class_library.AlphaArchScraper]
 
 
 def scrape_new_data():

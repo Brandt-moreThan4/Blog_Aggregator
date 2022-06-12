@@ -200,7 +200,7 @@ class AswathScraper(SiteScrapper):
 
         return new_post
 
-
+    @staticmethod
     def get_posts_on_page(page_url):
         """Given a url, extract all the post on the page and build the 
         posty object if the page actually contains posts."""
@@ -217,7 +217,7 @@ class OSAMScraper(SiteScrapper):
 
     ROOT_URL = 'https://osam.com'
     BLOG_HOME = 'https://osam.com/Commentary'
-    NAME = 'OSAM'
+    WEBSITE_NAME = 'OSAM'
 
     def __init__(self):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
@@ -251,7 +251,7 @@ class OSAMScraper(SiteScrapper):
         # Can't find author or body from the Commentary archive page.
         page_soup = sf.get_soup(new_post.url).find(id='divcontent')
         new_post.author = page_soup.h1.find_next().text[3:] # Teh first 3 characters are not actually the author
-        new_post.website_name = 'OSAM'
+        new_post.website_name = OSAMScraper.WEBSITE_NAME
 
         return new_post
 
@@ -285,10 +285,95 @@ class MoneyBankingScaper(SiteScrapper):
         return new_post
 
 
+class OakTreeScraper(SiteScrapper):
+    """Inherits from . Implements specific functionality for scrapeing Aswath's website."""
+
+    ROOT_URL = 'https://www.oaktreecapital.com'
+    BLOG_HOME = 'https://www.oaktreecapital.com/insights/memos'
+    WEBSITE_NAME = 'Oak Tree Capital'
+
+    def __init__(self):
+        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
+        pass
+
+
+    def get_new_posts(self):
+        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
+
+        self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
+        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+
+        add_posts_to_db(self.new_posts)
+
+    @staticmethod
+    def get_posts_on_page(page_url,posts_to_scape:int=20):
+        """Given a url, extract all the post on the page and build the 
+        posty objects if the page actually contains posts."""
+
+        page_soup = sf.get_soup(page_url)
+
+        # We first locate all of the post links in the page, then select the parent tag as the post soup that we want.
+        post_soups = [link.parent for link in page_soup.find_all(class_='oc-title-link')[:posts_to_scape]]
+        return [OakTreeScraper.build_post(post_soup) for post_soup in post_soups]
+
+    @staticmethod
+    def build_post(post_soup):
+        """Send in the soup of a post and spit out one of my post objects"""
+        new_post = Posty()
+        new_post.date = post_soup.find('time')
+        new_post.title = post_soup.a.text
+        new_post.url = OakTreeScraper.ROOT_URL + post_soup.a['href']
+        new_post.author = 'Howard Marks'
+        new_post.website_name = OakTreeScraper.WEBSITE_NAME
+
+        return new_post
+
+
 
 class AlphaArchScraper(SiteScrapper):
-    pass
-    # Scrape both blog and white papers
+    """Inherits from . Implements specific functionality for scrapeing Aswath's website."""
+
+    ROOT_URL = 'https://alphaarchitect.com'
+    BLOG_HOME = 'https://alphaarchitect.com/blog/'
+
+
+    WEBSITE_NAME = 'Alpha Architect'
+
+    def __init__(self):
+        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
+        pass
+
+
+    def get_new_posts(self):
+        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
+
+        self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
+        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+
+        add_posts_to_db(self.new_posts)
+
+    @staticmethod
+    def get_posts_on_page(page_url,posts_to_scape:int=20):
+        """Given a url, extract all the post on the page and build the 
+        posty objects if the page actually contains posts."""
+
+        page_soup = sf.get_soup(page_url)
+
+        # We first locate all of the post links in the page, then select the parent tag as the post soup that we want.
+        post_soups = [link for link in page_soup.find_all('article')[:posts_to_scape]]
+        return [AlphaArchScraper.build_post(post_soup) for post_soup in post_soups]
+
+    @staticmethod
+    def build_post(post_soup):
+        """Send in the soup of a post and spit out one of my post objects"""
+        new_post = Posty()
+        new_post.title = post_soup.h2.text
+        new_post.url = AlphaArchScraper.ROOT_URL + post_soup.h2.a['href']
+        new_post.date = post_soup.p.a.next_sibling.next_sibling.text
+        new_post.author = post_soup.p.a.text
+        new_post.website_name = AlphaArchScraper.WEBSITE_NAME
+
+        return new_post
 
 
 

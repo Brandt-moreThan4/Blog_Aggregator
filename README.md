@@ -8,9 +8,9 @@ my personal website hasn't been updated with all of the new articles in awhile.
 ## To Implement:
 * Logging
 * Prefect
+* refactor add to db?? Maybe
+* Convert db to postgres?
+* Schedule it to run every day
+* Validate that the links actually work
 * Blogs 
-  * [Howard Marks](https://www.oaktreecapital.com/insights/memos)
-  * OSAM
-  * Aswath
-  * Money and Banking
-  * Alpha Architect
+  * Alpha Arhitect: Coming soon, but I think I need to use selenium.
