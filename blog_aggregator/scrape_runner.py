@@ -12,15 +12,15 @@ logging.basicConfig(level=logging.WARNING)
 import class_library
 from settings import SITES_TO_SCRAPE
 
-SITES_TO_SCRAPE = [class_library.CollaborativeScraper, class_library.StratecheryScraper]
+# SITES_TO_SCRAPE = [class_library.AswathScraper]
 
 
 
 
 def scrape_new_data():
 
-    df_data = load_db() 
-    old_post_count = len(df_data)
+    # df_data = load_db() 
+    # old_post_count = len(df_data)
     for scraper in SITES_TO_SCRAPE:
         logging.warning(f'About to try to scrape{scraper}')
         scraper = scraper()
