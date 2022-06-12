@@ -19,14 +19,16 @@ class SiteScrapper:
     a static method right?
     """
 
-    pass
-    # def get_new_posts(self):
-    #     pass
+    def get_new_posts(self):
+        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
+
+        self.posts_on_feed = self.get_posts_on_feed()
+        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+
+        add_posts_to_db(self.new_posts)    
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}'
-
-
 
 
 
@@ -95,12 +97,13 @@ def add_posts_to_db(posty_list:List[Posty]):
     post_dicts = [posty.as_dict() for posty in posty_list]
     df_new = pd.DataFrame(post_dicts)
 
-    df_combined = pd.concat([df_db,df_new])
+    if len(df_new) > 0:
+        df_combined = pd.concat([df_db,df_new])
 
-    df_combined.to_csv(data_path / 'article_db.csv',index=False)
-    return df_combined
-    # for posty in posty_list:
-    #     print(f'Adding post: {posty}')
+        df_combined.to_csv(data_path / 'article_db.csv',index=False)
+
+    return df_new
+
 
 
 class StratecheryScraper(SiteScrapper):
@@ -117,17 +120,7 @@ class StratecheryScraper(SiteScrapper):
         """Extract all articles in the RSS feed and convert them to Posty objects."""
 
         rss_soup = sf.get_soup(self.RSS_URL,'xml')
-
         return [self.build_post(post_soup) for post_soup in rss_soup.find_all('item')]
-
-
-    def get_new_posts(self):
-        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
-
-        self.posts_on_feed = self.get_posts_on_feed()
-        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
-
-        add_posts_to_db(self.new_posts)
 
 
     def build_post(self, post_soup:BeautifulSoup) -> Posty:
@@ -153,14 +146,6 @@ class CollaborativeScraper(SiteScrapper):
     def __init__(self):
         pass
 
-
-    def get_new_posts(self):
-        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
-
-        self.posts_on_feed = self.get_posts_on_feed()
-        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
-
-        add_posts_to_db(self.new_posts)
 
 
     def get_posts_on_feed(self) -> List[Posty]:
@@ -188,65 +173,33 @@ class AswathScraper(SiteScrapper):
     ROOT_URL = 'http://aswathdamodaran.blogspot.com'
     BLOG_HOME = 'http://aswathdamodaran.blogspot.com'
 
-    # Name is used in several places to query the db for a specific blog.
     NAME = 'Aswath Damodaron Blog'
 
     def __init__(self):
         """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
 
-        self.most_recent_post = get_most_recent_post(self.NAME)
+        pass
 
     def get_new_posts(self):
-        """Check the front page for any new posts and download those if they are newer than the newest in the db."""
+        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
-        page_soup = sf.get_soup(self.BLOG_HOME)
-        posts_on_page = page_soup.find_all(class_='post-outer')
-        new_posts = [self.build_post(post_soup) for post_soup in posts_on_page
-                     if self.get_post_date(post_soup) > self.most_recent_post.date]
+        self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
+        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
 
-        self.add_posts_to_db(new_posts)
+        add_posts_to_db(self.new_posts)
 
-    @staticmethod
-    def get_post_date(post_soup):
-        """Give the post soup and return a datetime.date object witht he post date. If 
-            you can't get the date for some reason or can't parse it then just return a date of 1/1/1
-            so it will be obvious something is screwey if it gets into the db, but most likely will not 
-            get in since it only pulls in new posts."""
-
-        try:
-            date_string = post_soup.parent.parent.find(class_='date-header').text.strip()
-            return parse(date_string).date()
-        except:
-            return datetime.date(1, 1, 1)
 
     def build_post(self, post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
         new_post = Posty()
-        new_post.date = self.get_post_date(post_soup)
+        new_post.date = post_soup.parent.parent.find(class_='date-header').text.strip()
         new_post.title = post_soup.find(class_='post-title').text.strip()
         new_post.author = 'Aswath Damodaron'
-        new_post.body = new_post.body = str(post_soup)
         new_post.url = post_soup.find(class_='post-title').a.get('href')
-        new_post.website = self.ROOT_URL
-        new_post.name = 'Aswath Damodaron Blog'
+        new_post.website_name = 'Aswath Damodaron Blog'
 
         return new_post
 
-    def get_historical_posts(self):
-        """Scrape all historical posts."""
-
-        # YEARS and MONTHS are used to loop through all of the blog urls.
-        YEARS = [str(2008 + i) for i in range(13)]
-        MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-
-        for year in YEARS:
-            for month in MONTHS:
-                page_url = self.BLOG_HOME + '/' + year + '/' + month
-                posts_on_page = self.get_posts_on_page(page_url)
-                if posts_on_page:
-                    self.add_posts_to_db(posts_on_page)
-                # Take a short break to hopefully not be too much of a dick.
-                time.sleep(4)
 
     def get_posts_on_page(self, page_url):
         """Given a url, extract all the post on the page and build the 
@@ -254,13 +207,11 @@ class AswathScraper(SiteScrapper):
 
         page_soup = sf.get_soup(page_url)
 
-        if self.page_is_valid(page_soup):
-            return [self.build_post(post_soup) for post_soup in page_soup.find_all(class_='post-outer')]
+        return [self.build_post(post_soup) for post_soup in page_soup.find_all(class_='post-outer')]
 
-    @staticmethod
-    def page_is_valid(page_soup):
-        """Give the whole soup on the page and returns True if it contains at least one post on the page."""
-        return page_soup.find(class_='post-body') is not None
+
+
+
 
 
 class OSAMScraper(SiteScrapper):
