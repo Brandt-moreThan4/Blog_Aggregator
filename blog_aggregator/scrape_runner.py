@@ -6,7 +6,6 @@ from utils import load_db, create_db, MissingDbException
 from typing import List
 import datetime
 
-import class_library
 from class_library import StratecheryScraper, CollaborativeScraper, AswathScraper, OSAMScraper, SiteScrapper, MoneyBankingScaper, OakTreeScraper
 
 
@@ -43,7 +42,6 @@ def scrape_new_data():
 
     if len(df_data_new) > len(df_data_old):
         logging.info('Yipee, looks like there are new posts. Now we can send an email.')
-
 
 
 if __name__ == '__main__':

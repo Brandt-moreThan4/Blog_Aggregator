@@ -12,7 +12,6 @@ with open('config.json') as f:
 
 
 
-
 ctx = ssl.create_default_context()
 password = config['app_password']    # Your app password goes here
 sender = config['email']    # Your e-mail address

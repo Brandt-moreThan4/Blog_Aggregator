@@ -2,7 +2,6 @@
 import pandas as pd
 import datetime
 from typing import List
-import requests
 from pathlib import Path
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
@@ -10,7 +9,6 @@ import logging
 
 import scrapefunctions as sf
 from utils import load_db, data_path
-
 
 
 
@@ -354,15 +352,3 @@ class AlphaArchScraper(SiteScrapper):
         new_post.website_name = AlphaArchScraper.WEBSITE_NAME
 
         return new_post
-
-
-
-
-# def get_most_recent_post(website_name: str = None) -> Posty:
-#     """Get the most recent post. Filtered by the name if one is passed in."""
-#     last_post_row:pd.Series = df_db.query(f'website_name == "{website_name}"').sort_values(by='date',ascending=False)
-#     posty = Posty.from_series(last_post_row)
-#     return posty
-
-
-
