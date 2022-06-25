@@ -1,49 +1,32 @@
 """Library of all the scraping classes."""
 import pandas as pd
 import datetime
-import json
 from typing import List
 import requests
 from pathlib import Path
-import time
 from bs4 import BeautifulSoup
 from dateutil.parser import parse
+import logging
 
 import scrapefunctions as sf
 from utils import load_db, data_path
 
-df_db = load_db()
 
-class SiteScrapper:
-    """Generic site scrapper that the rest will inherit from. This is kind of silly tho since the only method is
-    a static method right?
-    """
-
-    def get_new_posts(self):
-        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
-
-        self.posts_on_feed = self.get_posts_on_feed()
-        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
-
-        add_posts_to_db(self.new_posts)    
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}'
+# df_db = load_db()
 
 
 
 class Posty:
     """Class to store the information about each posts. It is basically just a dataclass."""
 
-    # Only reason for doing below is that it is nice to know what this object should expect to have.
     _date: datetime.date
     title: str
     author: str
     url: str
     website_name: str
 
-    def __init__(self):
-        pass
+    # def __init__(self):
+    #     pass
 
     @property
     def date(self):
@@ -91,18 +74,51 @@ class Posty:
 
         return post
 
-def add_posts_to_db(posty_list:List[Posty]):
 
-    df_db = load_db()
-    post_dicts = [posty.as_dict() for posty in posty_list]
-    df_new = pd.DataFrame(post_dicts)
+class SiteScrapper:
+    """Generic site scrapper that the rest will inherit from. This is kind of silly tho since the only method is
+    a static method right?
+    """
 
-    if len(df_new) > 0:
-        df_combined = pd.concat([df_db,df_new])
+    def get_new_posts(self):
+        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
-        df_combined.to_csv(data_path / 'article_db.csv',index=False)
+        self.posts_on_feed = self.get_posts_on_feed()
+        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
 
-    return df_new
+        # add_posts_to_db(self.new_posts)    
+
+    def add_posts_to_db(self) -> pd.DataFrame:
+        """ Add the new posts that were scraped, if any, to the database.
+        """
+
+        if len(self.new_posts) > 0:
+            
+            post_dicts = [posty.as_dict() for posty in self.new_posts]
+            df_new = pd.DataFrame(post_dicts)
+
+            df_db_existing = load_db()
+            df_combined = pd.concat([df_db_existing,df_new])
+
+            df_combined.to_csv(data_path / 'article_db.csv',index=False)
+
+            return df_new
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}'
+
+# def add_posts_to_db(posty_list:List[Posty]):
+
+#     df_db = load_db()
+#     post_dicts = [posty.as_dict() for posty in posty_list]
+#     df_new = pd.DataFrame(post_dicts)
+
+#     if len(df_new) > 0:
+#         df_combined = pd.concat([df_db,df_new])
+
+#         df_combined.to_csv(data_path / 'article_db.csv',index=False)
+
+#     return df_new
 
 
 
