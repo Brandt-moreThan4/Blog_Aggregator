@@ -12,8 +12,6 @@ import scrapefunctions as sf
 from utils import load_db, data_path
 
 
-# df_db = load_db()
-
 
 
 class Posty:
@@ -25,8 +23,6 @@ class Posty:
     url: str
     website_name: str
 
-    # def __init__(self):
-    #     pass
 
     @property
     def date(self):
@@ -48,6 +44,7 @@ class Posty:
                 self._date = parse(value).date()
             except:
                 # If convert doesn't work then just set it as the current time.
+                logging.warn(f'Was not able to parse the following date, so post = {self.__repr__()} will have its date set for today.')
                 self._date = datetime.date.today()
 
     def __str__(self):
@@ -80,20 +77,31 @@ class SiteScrapper:
     a static method right?
     """
 
+    def __init__(self,df_db:pd.DataFrame) -> None:
+        self.df_db: pd.DataFrame = df_db
+
+
+    def post_is_in_db(self,posty:Posty) -> bool:
+        """Test whether the post is in the db using either."""
+
+        df_filtered = self.df_db.query(f'website_name == "{posty.website_name}" & title == "{posty.title}" & author == "{posty.author}"')
+        
+        return len(df_filtered) > 0 
+
     def get_new_posts(self):
         """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
         self.posts_on_feed = self.get_posts_on_feed()
-        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+        self.new_posts = [posty for posty in self.posts_on_feed if not self.post_is_in_db(posty)]
 
-        # add_posts_to_db(self.new_posts)    
 
     def add_posts_to_db(self) -> pd.DataFrame:
         """ Add the new posts that were scraped, if any, to the database.
         """
+        new_post_count = len(self.new_posts)
+        logging.info(f'Adding {new_post_count} to db for {self.__repr__()}')
+        if new_post_count > 0:
 
-        if len(self.new_posts) > 0:
-            
             post_dicts = [posty.as_dict() for posty in self.new_posts]
             df_new = pd.DataFrame(post_dicts)
 
@@ -104,21 +112,9 @@ class SiteScrapper:
 
             return df_new
 
+
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}'
-
-# def add_posts_to_db(posty_list:List[Posty]):
-
-#     df_db = load_db()
-#     post_dicts = [posty.as_dict() for posty in posty_list]
-#     df_new = pd.DataFrame(post_dicts)
-
-#     if len(df_new) > 0:
-#         df_combined = pd.concat([df_db,df_new])
-
-#         df_combined.to_csv(data_path / 'article_db.csv',index=False)
-
-#     return df_new
 
 
 
@@ -129,8 +125,6 @@ class StratecheryScraper(SiteScrapper):
 
     WEBSITE_NAME = 'Stratechery'
 
-    def __init__(self):
-        pass
 
     def get_posts_on_feed(self) -> List[Posty]:
         """Extract all articles in the RSS feed and convert them to Posty objects."""
@@ -158,10 +152,6 @@ class CollaborativeScraper(SiteScrapper):
     RSS_URL = 'http://feeds.feedburner.com/collabfund'
 
     WEBSITE_NAME = 'Collaborative Fund'
-
-    def __init__(self):
-        pass
-
 
 
     def get_posts_on_feed(self) -> List[Posty]:
@@ -191,29 +181,23 @@ class AswathScraper(SiteScrapper):
 
     NAME = 'Aswath Damodaron Blog'
 
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-
-        pass
 
     def get_new_posts(self):
         """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
         self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
-        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+        self.new_posts = [posty for posty in self.posts_on_feed if not self.post_is_in_db(posty)]
 
-        add_posts_to_db(self.new_posts)
 
     @staticmethod
     def build_post(post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
         new_post = Posty()
-        new_post.date = post_soup.parent.parent.find(class_='date-header').text.strip()
         new_post.title = post_soup.find(class_='post-title').text.strip()
         new_post.author = 'Aswath Damodaron'
         new_post.url = post_soup.find(class_='post-title').a.get('href')
         new_post.website_name = 'Aswath Damodaron Blog'
-
+        new_post.date = post_soup.parent.parent.find(class_='date-header').text.strip()
         return new_post
 
     @staticmethod
@@ -229,24 +213,18 @@ class AswathScraper(SiteScrapper):
 
 
 class OSAMScraper(SiteScrapper):
-    """Inherits from . Implements specific functionality for scrapeing Aswath's website."""
 
     ROOT_URL = 'https://osam.com'
     BLOG_HOME = 'https://osam.com/Commentary'
     WEBSITE_NAME = 'OSAM'
-
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        pass
 
 
     def get_new_posts(self):
         """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
         self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
-        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+        self.new_posts = [posty for posty in self.posts_on_feed if not self.post_is_in_db(posty)]
 
-        add_posts_to_db(self.new_posts)
 
     @staticmethod
     def get_posts_on_page(page_url,posts_to_scape:int=20):
@@ -260,14 +238,14 @@ class OSAMScraper(SiteScrapper):
     def build_post(post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
         new_post = Posty()
-        new_post.date = post_soup.find(_class='divDate')
+
         new_post.title = post_soup.h5.text
         new_post.url = OSAMScraper.ROOT_URL + post_soup.a['href']
-
         # Can't find author or body from the Commentary archive page.
         page_soup = sf.get_soup(new_post.url).find(id='divcontent')
         new_post.author = page_soup.h1.find_next().text[3:] # Teh first 3 characters are not actually the author
         new_post.website_name = OSAMScraper.WEBSITE_NAME
+        new_post.date = post_soup.find('div',{'class':'divDate'}).text        
 
         return new_post
 
@@ -278,8 +256,6 @@ class MoneyBankingScaper(SiteScrapper):
     RSS_URL = 'https://www.moneyandbanking.com/commentary?format=rss'
     WEBSITE_NAME = 'Money, Banking and Financial Markets'
 
-    def __init__(self):
-        pass
 
     @staticmethod
     def get_posts_on_feed() -> List[Posty]:
@@ -293,11 +269,11 @@ class MoneyBankingScaper(SiteScrapper):
         """Send in the soup of an article and spit out a posty object with data filled in."""
 
         new_post = Posty()
-        new_post.date = parse(post_soup.find('pubDate').text).date()
         new_post.title = post_soup.find('title').text
         new_post.author = post_soup.find('creator').text
         new_post.url = post_soup.find('link').text
         new_post.website_name = MoneyBankingScaper.WEBSITE_NAME
+        new_post.date = post_soup.find('pubDate').text
         return new_post
 
 
@@ -308,18 +284,13 @@ class OakTreeScraper(SiteScrapper):
     BLOG_HOME = 'https://www.oaktreecapital.com/insights/memos'
     WEBSITE_NAME = 'Oak Tree Capital'
 
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        pass
-
 
     def get_new_posts(self):
         """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
         self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
-        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+        self.new_posts = [posty for posty in self.posts_on_feed if not self.post_is_in_db(posty)]
 
-        add_posts_to_db(self.new_posts)
 
     @staticmethod
     def get_posts_on_page(page_url,posts_to_scape:int=20):
@@ -336,12 +307,11 @@ class OakTreeScraper(SiteScrapper):
     def build_post(post_soup):
         """Send in the soup of a post and spit out one of my post objects"""
         new_post = Posty()
-        new_post.date = post_soup.find('time')
+        new_post.website_name = OakTreeScraper.WEBSITE_NAME
         new_post.title = post_soup.a.text
         new_post.url = OakTreeScraper.ROOT_URL + post_soup.a['href']
+        new_post.date = post_soup.find('time').text
         new_post.author = 'Howard Marks'
-        new_post.website_name = OakTreeScraper.WEBSITE_NAME
-
         return new_post
 
 
@@ -352,21 +322,15 @@ class AlphaArchScraper(SiteScrapper):
     ROOT_URL = 'https://alphaarchitect.com'
     BLOG_HOME = 'https://alphaarchitect.com/blog/'
 
-
     WEBSITE_NAME = 'Alpha Architect'
-
-    def __init__(self):
-        """Only thing this does, is to populate the most_recent_post variable which contains a models.Post object."""
-        pass
 
 
     def get_new_posts(self):
         """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
 
         self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
-        self.new_posts = [posty for posty in self.posts_on_feed if not post_is_in_db(posty)]
+        self.new_posts = [posty for posty in self.posts_on_feed if not self.post_is_in_db(posty)]
 
-        add_posts_to_db(self.new_posts)
 
     @staticmethod
     def get_posts_on_page(page_url,posts_to_scape:int=20):
@@ -394,17 +358,11 @@ class AlphaArchScraper(SiteScrapper):
 
 
 
-def get_most_recent_post(website_name: str = None) -> Posty:
-    """Get the most recent post. Filtered by the name if one is passed in."""
-    last_post_row:pd.Series = df_db.query(f'website_name == "{website_name}"').sort_values(by='date',ascending=False)
-    posty = Posty.from_series(last_post_row)
-    return posty
+# def get_most_recent_post(website_name: str = None) -> Posty:
+#     """Get the most recent post. Filtered by the name if one is passed in."""
+#     last_post_row:pd.Series = df_db.query(f'website_name == "{website_name}"').sort_values(by='date',ascending=False)
+#     posty = Posty.from_series(last_post_row)
+#     return posty
 
 
-def post_is_in_db(posty:Posty) -> bool:
-    """Test whether the post is in the db using either. I should update this to include the ability to filter by blog
-     name as well."""
 
-    df_filtered = df_db.query(f'website_name == "{posty.website_name}" & title == "{posty.title}" & author == "{posty.author}"')
-    
-    return len(df_filtered) > 0 

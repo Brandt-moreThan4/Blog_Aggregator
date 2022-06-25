@@ -7,8 +7,6 @@ my personal website hasn't been updated with all of the new articles in awhile.
 
 ## To Implement:
 * Logging
-* Prefect
-* refactor add to db methods??
 * Change the db to be sotred in a google drive account that can be accessed programatically? Or some other option than csv
 * Schedule it to run every day
 * Validate that the links actually work

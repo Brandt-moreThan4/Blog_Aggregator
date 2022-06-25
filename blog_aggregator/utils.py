@@ -10,6 +10,9 @@ db_path: Path = data_path / 'article_db.csv'
 BLOG_FIELDS = ['date','website_name','author','title','url']
 
 
+class MissingDbException(Exception):
+    pass
+
 
 def create_db(columns=BLOG_FIELDS, db_path: Union[str,Path]=db_path):
     """Create a pandas df with the specified columns, and save it as a csv in the desired location."""
@@ -23,5 +26,5 @@ def load_db(db_path: Union[str,Path]=db_path) -> pd.DataFrame:
     if db_path.exists():
         return pd.read_csv(db_path, parse_dates=['date'])
     else:
-        raise Exception(f'Sorry, no database found at location {db_path=}')
+        raise MissingDbException(f'Sorry, no database found at location {db_path=}')
 
