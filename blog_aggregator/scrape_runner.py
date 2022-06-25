@@ -1,7 +1,7 @@
 """High level module to run my scrapers. """
 import pandas as pd
 import logging
-
+from email_sender import email_new_posts
 from utils import load_db, create_db, MissingDbException
 from typing import List
 import datetime
@@ -42,6 +42,9 @@ def scrape_new_data():
 
     if len(df_data_new) > len(df_data_old):
         logging.info('Yipee, looks like there are new posts. Now we can send an email.')
+        df_new_posts_only = df_data_new[~df_data_new.title.isin(df_data_old.title)]
+        email_new_posts(df_new_posts_only)
+
 
 
 if __name__ == '__main__':
