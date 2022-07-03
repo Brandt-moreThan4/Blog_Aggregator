@@ -6,7 +6,7 @@ from utils import load_db, create_db, MissingDbException
 from typing import List
 import datetime
 
-from class_library import StratecheryScraper, CollaborativeScraper, AswathScraper, OSAMScraper, SiteScrapper, MoneyBankingScaper, OakTreeScraper
+from class_library import StratecheryScraper, CollaborativeScraper, AswathScraper, OSAMScraper, SiteScrapper, MoneyBankingScaper, OakTreeScraper, AWOCS
 
 
 logging.basicConfig(filename='blog_aggregator/scrape.log',level=logging.INFO, filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -14,8 +14,7 @@ logging.basicConfig(filename='blog_aggregator/scrape.log',level=logging.INFO, fi
 
 
 # Perhaps the sites to scrape should actually be a setting that could be turned on and off in the db.
-SITES_TO_SCRAPE:List[SiteScrapper] = [StratecheryScraper, CollaborativeScraper, AswathScraper,
-                                     OSAMScraper, MoneyBankingScaper, OakTreeScraper]
+SITES_TO_SCRAPE:List[SiteScrapper] = [AWOCS]
 
 # SITES_TO_SCRAPE = [OSAMScraper, OakTreeScraper]
 

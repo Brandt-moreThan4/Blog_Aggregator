@@ -103,23 +103,35 @@ date,website_name,author,title,url
 2021-08-16 00:00:00,"Money, Banking and Financial Markets",Steve Cecchetti and Kim Schoenholtz,The ECB's New Strategy: Codifying Existing Practice . . . plus,https://www.moneyandbanking.com/commentary/2021/8/14/the-ecbs-new-strategy-codifying-existing-practice-plus
 2021-07-26 00:00:00,"Money, Banking and Financial Markets",Steve Cecchetti and Kim Schoenholtz,The QE Ratchet,https://www.moneyandbanking.com/commentary/2021/7/24/the-qe-ratchet
 2021-07-05 00:00:00,"Money, Banking and Financial Markets",Steve Cecchetti and Kim Schoenholtz,Talking about Tapering,https://www.moneyandbanking.com/commentary/2021/7/3/talking-about-tapering
-2022-06-23,Oak Tree Capital,Howard Marks,Conversation at Panmure House,https://www.oaktreecapital.com/insights/memo/conversation-at-panmure-house
-2022-05-26,Oak Tree Capital,Howard Marks,Bull Market Rhymes,https://www.oaktreecapital.com/insights/memo/bull-market-rhymes
-2022-03-23,Oak Tree Capital,Howard Marks,The Pendulum in International Affairs,https://www.oaktreecapital.com/insights/memo/the-pendulum-in-international-affairs
-2022-01-13,Oak Tree Capital,Howard Marks,Selling Out,https://www.oaktreecapital.com/insights/memo/selling-out
-2021-11-23,Oak Tree Capital,Howard Marks,The Winds of Change,https://www.oaktreecapital.com/insights/memo/the-winds-of-change
-2021-07-29,Oak Tree Capital,Howard Marks,Thinking About Macro,https://www.oaktreecapital.com/insights/memo/thinking-about-macro
-2021-03-04,Oak Tree Capital,Howard Marks,2020 in Review,https://www.oaktreecapital.com/insights/memo/2020-in-review
-2021-01-11,Oak Tree Capital,Howard Marks,Something of Value,https://www.oaktreecapital.com/insights/memo/something-of-value
-2020-10-13,Oak Tree Capital,Howard Marks,Coming into Focus,https://www.oaktreecapital.com/insights/memo/coming-into-focus
-2020-08-05,Oak Tree Capital,Howard Marks,Time for Thinking,"https://www.oaktreecapital.comjavascript:openPDF('Time for Thinking','https://www.oaktreecapital.com/docs/default-source/memos/timeforthinking.pdf?sfvrsn=17818c65_8')"
-2020-06-18,Oak Tree Capital,Howard Marks,The Anatomy of a Rally,"https://www.oaktreecapital.comjavascript:openPDF('The Anatomy of a Rally','https://www.oaktreecapital.com/docs/default-source/memos/the-anatomy-of-a-rally.pdf?sfvrsn=f5828c65_4')"
-2020-06-11,Oak Tree Capital,Howard Marks,Not Enough,"https://www.oaktreecapital.comjavascript:openPDF('Not Enough','https://www.oaktreecapital.com/docs/default-source/memos/not-enough.pdf?sfvrsn=8f828c65_4')"
-2020-05-28,Oak Tree Capital,Howard Marks,Uncertainty II,"https://www.oaktreecapital.comjavascript:openPDF('Uncertainty II','https://www.oaktreecapital.com/docs/default-source/memos/uncertainty-ii.pdf?sfvrsn=d48a65_8')"
-2020-05-11,Oak Tree Capital,Howard Marks,Uncertainty,"https://www.oaktreecapital.comjavascript:openPDF('Uncertainty','https://www.oaktreecapital.com/docs/default-source/memos/uncertainty.pdf?sfvrsn=d913b465_28')"
-2020-04-14,Oak Tree Capital,Howard Marks,Knowledge of the Future,"https://www.oaktreecapital.comjavascript:openPDF('Knowledge of the Future','https://www.oaktreecapital.com/docs/default-source/memos/knowledge-of-the-future.pdf?sfvrsn=fa39b665_6')"
-2020-04-06,Oak Tree Capital,Howard Marks,Calibrating,"https://www.oaktreecapital.comjavascript:openPDF('Calibrating','https://www.oaktreecapital.com/docs/default-source/memos/calibrating.pdf?sfvrsn=3e98b665_6')"
-2020-03-31,Oak Tree Capital,Howard Marks,Which Way Now?,"https://www.oaktreecapital.comjavascript:openPDF('Which Way Now','https://www.oaktreecapital.com/docs/default-source/memos/which-way-now.pdf?sfvrsn=f5f4b765_8')"
-2020-03-19,Oak Tree Capital,Howard Marks,Latest Update,"https://www.oaktreecapital.comjavascript:openPDF('Latest Update','https://www.oaktreecapital.com/docs/default-source/memos/weekly.pdf?sfvrsn=cbf3b065_8')"
-2020-03-03,Oak Tree Capital,Howard Marks,Nobody Knows II,"https://www.oaktreecapital.comjavascript:openPDF('Nobody Knows II','https://www.oaktreecapital.com/docs/default-source/memos/nobody-knows-ii.pdf?sfvrsn=108eb165_8')"
-2020-01-13,Oak Tree Capital,Howard Marks,You Bet!,"https://www.oaktreecapital.comjavascript:openPDF('You Bet','https://www.oaktreecapital.com/docs/default-source/memos/you-bet.pdf?sfvrsn=785dbe65_8')"
+2022-06-23 00:00:00,Oak Tree Capital,Howard Marks,Conversation at Panmure House,https://www.oaktreecapital.com/insights/memo/conversation-at-panmure-house
+2022-05-26 00:00:00,Oak Tree Capital,Howard Marks,Bull Market Rhymes,https://www.oaktreecapital.com/insights/memo/bull-market-rhymes
+2022-03-23 00:00:00,Oak Tree Capital,Howard Marks,The Pendulum in International Affairs,https://www.oaktreecapital.com/insights/memo/the-pendulum-in-international-affairs
+2022-01-13 00:00:00,Oak Tree Capital,Howard Marks,Selling Out,https://www.oaktreecapital.com/insights/memo/selling-out
+2021-11-23 00:00:00,Oak Tree Capital,Howard Marks,The Winds of Change,https://www.oaktreecapital.com/insights/memo/the-winds-of-change
+2021-07-29 00:00:00,Oak Tree Capital,Howard Marks,Thinking About Macro,https://www.oaktreecapital.com/insights/memo/thinking-about-macro
+2021-03-04 00:00:00,Oak Tree Capital,Howard Marks,2020 in Review,https://www.oaktreecapital.com/insights/memo/2020-in-review
+2021-01-11 00:00:00,Oak Tree Capital,Howard Marks,Something of Value,https://www.oaktreecapital.com/insights/memo/something-of-value
+2020-10-13 00:00:00,Oak Tree Capital,Howard Marks,Coming into Focus,https://www.oaktreecapital.com/insights/memo/coming-into-focus
+2020-08-05 00:00:00,Oak Tree Capital,Howard Marks,Time for Thinking,"https://www.oaktreecapital.comjavascript:openPDF('Time for Thinking','https://www.oaktreecapital.com/docs/default-source/memos/timeforthinking.pdf?sfvrsn=17818c65_8')"
+2020-06-18 00:00:00,Oak Tree Capital,Howard Marks,The Anatomy of a Rally,"https://www.oaktreecapital.comjavascript:openPDF('The Anatomy of a Rally','https://www.oaktreecapital.com/docs/default-source/memos/the-anatomy-of-a-rally.pdf?sfvrsn=f5828c65_4')"
+2020-06-11 00:00:00,Oak Tree Capital,Howard Marks,Not Enough,"https://www.oaktreecapital.comjavascript:openPDF('Not Enough','https://www.oaktreecapital.com/docs/default-source/memos/not-enough.pdf?sfvrsn=8f828c65_4')"
+2020-05-28 00:00:00,Oak Tree Capital,Howard Marks,Uncertainty II,"https://www.oaktreecapital.comjavascript:openPDF('Uncertainty II','https://www.oaktreecapital.com/docs/default-source/memos/uncertainty-ii.pdf?sfvrsn=d48a65_8')"
+2020-05-11 00:00:00,Oak Tree Capital,Howard Marks,Uncertainty,"https://www.oaktreecapital.comjavascript:openPDF('Uncertainty','https://www.oaktreecapital.com/docs/default-source/memos/uncertainty.pdf?sfvrsn=d913b465_28')"
+2020-04-14 00:00:00,Oak Tree Capital,Howard Marks,Knowledge of the Future,"https://www.oaktreecapital.comjavascript:openPDF('Knowledge of the Future','https://www.oaktreecapital.com/docs/default-source/memos/knowledge-of-the-future.pdf?sfvrsn=fa39b665_6')"
+2020-04-06 00:00:00,Oak Tree Capital,Howard Marks,Calibrating,"https://www.oaktreecapital.comjavascript:openPDF('Calibrating','https://www.oaktreecapital.com/docs/default-source/memos/calibrating.pdf?sfvrsn=3e98b665_6')"
+2020-03-31 00:00:00,Oak Tree Capital,Howard Marks,Which Way Now?,"https://www.oaktreecapital.comjavascript:openPDF('Which Way Now','https://www.oaktreecapital.com/docs/default-source/memos/which-way-now.pdf?sfvrsn=f5f4b765_8')"
+2020-03-19 00:00:00,Oak Tree Capital,Howard Marks,Latest Update,"https://www.oaktreecapital.comjavascript:openPDF('Latest Update','https://www.oaktreecapital.com/docs/default-source/memos/weekly.pdf?sfvrsn=cbf3b065_8')"
+2020-03-03 00:00:00,Oak Tree Capital,Howard Marks,Nobody Knows II,"https://www.oaktreecapital.comjavascript:openPDF('Nobody Knows II','https://www.oaktreecapital.com/docs/default-source/memos/nobody-knows-ii.pdf?sfvrsn=108eb165_8')"
+2020-01-13 00:00:00,Oak Tree Capital,Howard Marks,You Bet!,"https://www.oaktreecapital.comjavascript:openPDF('You Bet','https://www.oaktreecapital.com/docs/default-source/memos/you-bet.pdf?sfvrsn=785dbe65_8')"
+2022-06-27 00:00:00,Stratechery,Ben Thompson,"Spotify, Netflix, and Aggregation",https://stratechery.com/2022/spotify-netflix-and-aggregation/
+2022-06-28 00:00:00,Collaborative Fund,Unknown,Wealth vs. Getting Wealthier,http://www.collaborativefund.com/blog/wealth-vs-getting-wealthier/
+2022-07-03,A Wealth of Common Sense,Ben Carlson,The Worst 6 Months Ever For Financial Markets,https://awealthofcommonsense.com/2022/07/the-worst-6-months-ever-for-financial-markets/
+2022-07-01,A Wealth of Common Sense,Ben Carlson,What’s Priced Into the Stock Market?,https://awealthofcommonsense.com/2022/07/whats-priced-into-the-stock-market/
+2022-06-30,A Wealth of Common Sense,Ben Carlson,What’s the Best Travel Rewards Credit Card?,https://awealthofcommonsense.com/2022/06/whats-the-best-travel-rewards-credit-card/
+2022-06-29,A Wealth of Common Sense,Ben Carlson,Animal Spirits: Are We Sure a Recession is Coming?,https://awealthofcommonsense.com/2022/06/animal-spirits-are-we-sure-a-recession-is-coming/
+2022-06-28,A Wealth of Common Sense,Ben Carlson,Has the Consumer Ever Been More Prepared for a Recession?,https://awealthofcommonsense.com/2022/06/has-the-consumer-ever-been-more-prepared-for-a-recession/
+2022-06-27,A Wealth of Common Sense,Ben Carlson,Talk Your Book: Expanding Access to Private Markets,https://awealthofcommonsense.com/2022/06/talk-your-book-expanding-access-to-private-markets/
+2022-06-26,A Wealth of Common Sense,Ben Carlson,Is the 60/40 Really Dead This Time?,https://awealthofcommonsense.com/2022/06/is-the-60-40-really-dead-this-time/
+2022-06-24,A Wealth of Common Sense,Ben Carlson,"Unemployment Rates, Interest Rates, Mortgage Rates & Credit Card Rates",https://awealthofcommonsense.com/2022/06/unemployment-rates-interest-rates-mortgage-rates-credit-card-rates/
+2022-06-23,A Wealth of Common Sense,Ben Carlson,The Case For Owning Bonds,https://awealthofcommonsense.com/2022/06/the-case-for-owning-bonds/
+2022-06-22,A Wealth of Common Sense,Ben Carlson,Animal Spirits: Peak Pessimism,https://awealthofcommonsense.com/2022/06/animal-spirits-peak-pessimism/

@@ -97,7 +97,7 @@ class SiteScrapper:
         """ Add the new posts that were scraped, if any, to the database.
         """
         new_post_count = len(self.new_posts)
-        logging.info(f'Adding {new_post_count} to db for {self.__repr__()}')
+        logging.info(f'Adding {new_post_count} posts to db for {self.__repr__()}')
         if new_post_count > 0:
 
             post_dicts = [posty.as_dict() for posty in self.new_posts]
@@ -350,5 +350,47 @@ class AlphaArchScraper(SiteScrapper):
         new_post.date = post_soup.p.a.next_sibling.next_sibling.text
         new_post.author = post_soup.p.a.text
         new_post.website_name = AlphaArchScraper.WEBSITE_NAME
+
+        return new_post
+
+
+class AWOCS(SiteScrapper):
+    """Inherits from . Implements specific functionality for scrapeing Aswath's website."""
+
+    ROOT_URL = 'https://awealthofcommonsense.com/'
+    BLOG_HOME = ROOT_URL
+
+    WEBSITE_NAME = 'A Wealth of Common Sense'
+
+
+    def get_new_posts(self):
+        """Check the RSS feed for any new posts and download those if they are newer than the newest in the db."""
+
+        self.posts_on_feed = self.get_posts_on_page(self.BLOG_HOME)
+        self.new_posts = [posty for posty in self.posts_on_feed if not self.post_is_in_db(posty)]
+
+
+    @staticmethod
+    def get_posts_on_page(page_url,posts_to_scape:int=20):
+        """Given a url, extract all the post on the page and build the 
+        posty objects if the page actually contains posts."""
+
+        page_soup = sf.get_soup(page_url)
+
+        # We first locate all of the post links in the page, then select the parent tag as the post soup that we want.
+        post_soups = [link for link in page_soup.find_all(class_='article-header')[:posts_to_scape]]
+        return [AWOCS.build_post(post_soup) for post_soup in post_soups]
+
+    @staticmethod
+    def build_post(post_soup):
+        """Send in the soup of a post and spit out one of my post objects"""
+        new_post = Posty()
+        new_post.title = post_soup.h1.text
+        new_post.url = post_soup.h1.a['href']
+        new_post.author = 'Ben Carlson'
+        new_post.website_name = AWOCS.WEBSITE_NAME
+
+        page_soup = sf.get_soup(new_post.url)
+        new_post.date = page_soup.time.text
 
         return new_post

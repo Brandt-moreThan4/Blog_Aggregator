@@ -1,5 +1,5 @@
 # Blog_Aggregator
-Scrape several blogs each day and send out an email if there are new posts on any of the blogs.
+Scrape several blogs each week and send out an email if there are new posts on any of the blogs.
 
 ## To Implement:
 * Change the db to be sotred in a google drive account that can be accessed programatically? Or some other option than csv
